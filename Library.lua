@@ -393,6 +393,7 @@ local Templates = {
         GlobalSearch = false,
 
         CornerRadius = 4,
+        BackgroundTransparency = 0,
         NotifySide = "Right",
         ShowCustomCursor = true,
 
@@ -10859,6 +10860,7 @@ function Library:CreateWindow(WindowInfo)
             BackgroundColor3 = function()
                 return Library:GetBetterColor(Library.Scheme.BackgroundColor, -1)
             end,
+            BackgroundTransparency = WindowInfo.BackgroundTransparency,
             Name = "Main",
             Text = "",
             Position = WindowInfo.Position,
@@ -11367,6 +11369,14 @@ function Library:CreateWindow(WindowInfo)
             WindowInfo.SnapAvoidCoreGui = AvoidCoreGui == true
             WindowSnapConfig.AvoidCoreGui = WindowInfo.SnapAvoidCoreGui
         end
+    end
+
+    function Window:SetBackgroundTransparency(Transparency: number)
+        assert(typeof(Transparency) == "number", "Expected number for Transparency got: " .. typeof(Transparency))
+        Transparency = math.clamp(Transparency, 0, 1)
+
+        MainFrame.BackgroundTransparency = Transparency
+        WindowInfo.BackgroundTransparency = Transparency
     end
 
     function Window:SetCornerRadius(Radius: number)
