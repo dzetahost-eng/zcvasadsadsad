@@ -32,7 +32,7 @@ local Window = Library:CreateWindow({
 	-- Position and Size are also valid options here
 	-- but you do not need to define them unless you are changing them :)
 
-	Title = "mspaint",
+	Title = "",
 	Footer = "version: example",
 	Icon = 95816097006870,
 	NotifySide = "Right",
@@ -699,6 +699,54 @@ LeftGroupBox2:AddLabel(
 	"This label spans multiple lines! We're gonna run out of UI space...\nJust kidding! Scroll down!\n\n\nHello from below!",
 	true
 )
+
+-- Groupbox:AddViewport
+-- NEW: renders the local player's character painted solid white (Highlight doesn't render in ViewportFrames, so we recolor the clone)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local MyCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+local ViewportGroupBox = Tabs.Main:AddGroupbox({
+	Side = "Left",
+	Name = "Viewport",
+	Description = "local player preview",
+})
+
+local MyViewport = ViewportGroupBox:AddViewport("MyViewport", {
+	Object = MyCharacter, -- the library clones it (Clone = true by default), the real character stays untouched
+	Camera = Instance.new("Camera"),
+	Interactive = true, -- rotate with RMB
+	AutoFocus = true,
+	Height = 200,
+})
+
+-- Paint the CLONE white: fill all parts, strip face/clothing textures & scripts
+local function PaintCharacterWhite(Model)
+	for _, Obj in Model:GetDescendants() do
+		if Obj:IsA("BasePart") then
+			Obj.Color = Color3.new(1, 1, 1)
+			Obj.Material = Enum.Material.SmoothPlastic
+		elseif Obj:IsA("Decal") or Obj:IsA("Texture") or Obj:IsA("SurfaceAppearance")
+			or Obj:IsA("Shirt") or Obj:IsA("Pants") or Obj:IsA("ShirtGraphic")
+			or Obj:IsA("Script") or Obj:IsA("LocalScript") then
+			Obj:Destroy()
+		end
+	end
+end
+
+PaintCharacterWhite(MyViewport.Object)
+
+-- Refresh the preview on respawn
+LocalPlayer.CharacterAdded:Connect(function(Character)
+	if Library.Unloaded then
+		return
+	end
+
+	Character:WaitForChild("HumanoidRootPart")
+	MyViewport:SetObject(Character, true)
+	PaintCharacterWhite(MyViewport.Object)
+	MyViewport:Focus()
+end)
 
 -- NEW: BackgroundTransparency also works for tabboxes (and the sub-tab buttons are now rounded on all corners)
 local TabBox = Tabs.Main:AddTabbox({
