@@ -1,13 +1,3 @@
-if not LPH_OBFUSCATED then
-	local a = function() end
-	local g = getgenv and getgenv() or _G
-	g.LPH_ATTRIBUTES = a
-	g.ENCRYPT, g.VM, g.PRESET, g.OPTIMIZE, g.TRANSFORM, g.ERROR_HANDLING = a, a, a, a, a, a
-	g.UNROLL, g.INLINE, g.NO_UPVALUES = a, a, a
-	g.NONE, g.OPAL, g.ONYX, g.FAST, g.BALANCED, g.SECURE = a, a, a, a, a, a
-	g.EXTRACT, g.CONTROL_FLOW, g.REWRITE_NAMECALLS, g.GLOBALS, g.CONSTANTS = a, a, a, a, a
-end
-print("SHITARO -> Obsidian UI port")
 local shhttp = rawget(getfenv(), "request")
 	or (syn and syn.request)
 	or (http and http.request)
@@ -21,9 +11,7 @@ if type(shhttp) ~= "function" then
 end
 
 local shjson = game:GetService("HttpService")
-local shnet = {}
 
--- Key/license verification removed.
 local shkey = {}
 
 function shkey.bind(fn)
@@ -32,35 +20,12 @@ function shkey.bind(fn)
 	end
 end
 
-function shkey.stop()
-	shkey.alive = false
-end
-
+function shkey.stop() end
 function shkey.watch() end
 
 function shkey.open()
-	local prev = rawget(getgenv(), "SHKEY")
-
-	if type(prev) == "table" and type(prev.stop) == "function" and prev ~= shkey then
-		pcall(prev.stop)
-	end
-
-	shkey.alive = true
-	shkey.value = "KEY_BYPASSED"
-	shkey.reason = "KEY_BYPASSED"
-
-	getgenv().SHKEY = shkey
-	getgenv().SCRIPT_KEY = shkey.value
-	getgenv().JD_IS_PREMIUM = true
-	getgenv().JD_REASON = "KEY_BYPASSED"
-
 	return true
 end
-
-if not shkey.open() then
-	return
-end
-
 do
 	local band, bxor, bnot = bit32.band, bit32.bxor, bit32.bnot
 	local rrot, rshift = bit32.rrotate, bit32.rshift
@@ -978,14 +943,17 @@ local function CreateIndicator()
 	return ind
 end
 --==============================================================--
--- SHITARO -> OBSIDIAN UI PORT: compat layer                     --
--- ESP engine (esp.lua) is still loaded remotely, same as source --
+-- SHITARO -> OBSIDIAN UI PORT (compat layer)                    --
+-- наружу торчат только: esp, lib, window, notification,         --
+-- event_notify, popmenu, askinput                               --
 --==============================================================--
 
---// ESP ENGINE LOADER //--
-local esp = nil
+local esp, lib, window, notification, event_notify, popmenu, askinput
 
 do
+	--// ESP ENGINE LOADER (esp.lua грузится как в исходнике) //--
+	esp = nil
+
 	local function libsrc(name)
 		local ok_is, has = pcall(isfile, name)
 
@@ -1008,876 +976,872 @@ do
 		end
 	end
 
-	local espSrc = libsrc("esp.lua")
+	do
+		local espSrc = libsrc("esp.lua")
 
-	if espSrc then
-		local espLoad = loadstring(espSrc, "@esp")
-		espSrc = nil
+		if espSrc then
+			local espLoad = loadstring(espSrc, "@esp")
 
-		if espLoad then
-			local ok1, r1 = pcall(espLoad)
+			if espLoad then
+				local ok1, r1 = pcall(espLoad)
 
-			if ok1 and type(r1) == "table" then
-				esp = r1
+				if ok1 and type(r1) == "table" then
+					esp = r1
+				end
 			end
 		end
 	end
-end
 
---// OBSIDIAN UI BOOTSTRAP //--
-local obsidian_repo = "https://raw.githubusercontent.com/dzetahost-eng/zcvasadsadsad/main/"
+	--// OBSIDIAN UI //--
+	local obsidian_repo = "https://raw.githubusercontent.com/dzetahost-eng/zcvasadsadsad/main/"
 
-local Library
-if readfile and isfile and isfile("Library.lua") then
-	Library = loadstring(readfile("Library.lua"))()
-else
-	Library = loadstring(game:HttpGet(obsidian_repo .. "Library.lua"))()
-end
+	local Library
+	if readfile and isfile and isfile("Library.lua") then
+		Library = loadstring(readfile("Library.lua"))()
+	else
+		Library = loadstring(game:HttpGet(obsidian_repo .. "Library.lua"))()
+	end
 
-local ThemeManager = loadstring(game:HttpGet(obsidian_repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(obsidian_repo .. "addons/SaveManager.lua"))()
+	local ThemeManager = loadstring(game:HttpGet(obsidian_repo .. "addons/ThemeManager.lua"))()
+	local SaveManager = loadstring(game:HttpGet(obsidian_repo .. "addons/SaveManager.lua"))()
 
-Library.ForceCheckbox = false
+	Library.ForceCheckbox = false
 
-do
-	local Loading = Library:CreateLoading({
+	do
+		local Loading = Library:CreateLoading({
+			Title = "mspaint",
+			Icon = 95816097006870,
+			TotalSteps = 3,
+		})
+
+		Loading:SetMessage("SHITARO")
+		Loading:SetDescription("Loading core...")
+		task.wait(0.2)
+
+		Loading:SetCurrentStep(1)
+		Loading:SetDescription("Loading modules...")
+		task.wait(0.2)
+
+		Loading:SetCurrentStep(2)
+		Loading:ShowSidebarPage(true)
+		Loading.Sidebar:AddLabel("User: " .. game:GetService("Players").LocalPlayer.Name)
+		Loading.Sidebar:AddLabel("Good Luck!")
+		task.wait(0.1)
+
+		Loading:SetCurrentStep(3)
+		Loading:Continue()
+	end
+
+	local Window = Library:CreateWindow({
 		Title = "mspaint",
+		Footer = "local build",
 		Icon = 95816097006870,
-		TotalSteps = 3,
-	})
-
-	Loading:SetMessage("SHITARO")
-	Loading:SetDescription("Loading core...")
-	task.wait(0.7)
-
-	Loading:SetCurrentStep(1)
-	Loading:SetDescription("Loading modules...")
-	task.wait(0.7)
-
-	Loading:SetCurrentStep(2)
-	Loading:ShowSidebarPage(true)
-	Loading.Sidebar:AddLabel("User: " .. game:GetService("Players").LocalPlayer.Name)
-	Loading.Sidebar:AddLabel("Good Luck!")
-	task.wait(0.5)
-
-	Loading:SetCurrentStep(3)
-	Loading:Continue()
-end
-
-local Window = Library:CreateWindow({
-	Title = "mspaint",
-	Footer = "local build",
-	Icon = 95816097006870,
-	NotifySide = "Right",
-	CornerRadius = 12,
-	BackgroundTransparency = 0.15,
-	Animations = {
-		ToggleWindow = true,
-		TabSwitch = true,
-		Groupbox = true,
-		Dropdown = true,
-		KeyPicker = true,
-	},
-	IconSize = UDim2.fromOffset(30, 30),
-})
-
-Window:AddDialog("welcome", {
-	Title = "Welcome!",
-	Description = "Thanks for using our script!",
-	AutoDismiss = true,
-	OutsideClickDismiss = true,
-	FooterButtons = {
-		Confirm = {
-			Title = "Okay",
-			Variant = "Primary",
-			Callback = function() end,
+		NotifySide = "Right",
+		CornerRadius = 12,
+		BackgroundTransparency = 0.15,
+		Animations = {
+			ToggleWindow = true,
+			TabSwitch = true,
+			Groupbox = true,
+			Dropdown = true,
+			KeyPicker = true,
 		},
-	},
-})
-
-local Options = Library.Options
-local Toggles = Library.Toggles
-
-local auto_idx = 0
-local function next_flag(prefix)
-	auto_idx += 1
-	return (prefix or "El") .. "_" .. auto_idx
-end
-
---// old-lib shim //--
-local lib = {}
-lib.cursorlist = {}
-lib.tonelist = { "Click", "Pop" }
-
-function lib:notify(c)
-	c = c or {}
-	Library:Notify({
-		Title = tostring(c.title or c.Title or "SHITARO"),
-		Description = tostring(c.text or c.Content or ""),
-		Time = c.life or c.Duration or 5,
+		IconSize = UDim2.fromOffset(30, 30),
 	})
-end
 
-function lib:unload()
-	Library:Unload()
-end
+	Window:AddDialog("welcome", {
+		Title = "Welcome!",
+		Description = "Thanks for using our script!",
+		AutoDismiss = true,
+		OutsideClickDismiss = true,
+		FooterButtons = {
+			Confirm = {
+				Title = "Okay",
+				Variant = "Primary",
+				Callback = function() end,
+			},
+		},
+	})
 
-for _, name in { "hook", "unhook", "setcursor", "setstyle", "setsound", "settone", "sethotkeys", "setwatermark" } do
-	lib[name] = function() end
-end
+	local Options = Library.Options
+	local Toggles = Library.Toggles
 
-function lib:popup() end
+	local auto_idx = 0
+	local function next_flag(prefix)
+		auto_idx += 1
+		return (prefix or "El") .. "_" .. auto_idx
+	end
 
-function lib:ask()
-	return nil
-end
+	--// old-lib shim //--
+	lib = {}
+	lib.cursorlist = {}
+	lib.tonelist = { "Click", "Pop" }
 
-getgenv().shitaroebet = lib
-
---// notifications (same external API as source) //--
-local __Notification = {
-	new = function(c)
+	function lib:notify(c)
 		c = c or {}
-		lib:notify({
-			title = c.Title or "SHITARO",
-			text = c.Content or "",
-			life = c.Duration or 5,
+		Library:Notify({
+			Title = tostring(c.title or c.Title or "SHITARO"),
+			Description = tostring(c.text or c.Content or ""),
+			Time = c.life or c.Duration or 5,
 		})
-	end,
-}
+	end
 
-local __Logging = {
-	new = function(ic, txt, dur, col)
-		lib:notify({
-			title = tostring(txt or ""),
-			life = dur or 4,
-		})
-	end,
-}
+	function lib:unload()
+		Library:Unload()
+	end
 
-getgenv().UI_SYNC = { stamp = 0, count = 0, start = os.clock() }
+	for _, name in { "hook", "unhook", "setcursor", "setstyle", "setsound", "settone", "sethotkeys", "setwatermark" } do
+		lib[name] = function() end
+	end
 
-local function wrapCallback(fn)
-	if type(fn) ~= "function" then
+	function lib:popup() end
+	function lib:ask()
 		return nil
 	end
 
-	return function(...)
-		local sync = getgenv().UI_SYNC
-		if sync then
-			local now = os.clock()
-			if now - sync.stamp > 0.4 then sync.count = 0 end
-			sync.stamp = now
-			sync.count = sync.count + 1
-		end
-		return fn(...)
-	end
-end
-
-local function side_of(pos)
-	if pos == "full" or pos == 3 then
-		return "full"
-	end
-
-	return (pos == "right" or pos == 2) and "right" or "left"
-end
-
-local function obsidian_side(pos)
-	if side_of(pos) == "right" then
-		return "Right"
-	end
-
-	return "Left"
-end
-
---// section wrapper: raw old-lib API + Add* API over one Obsidian Groupbox //--
-local function wrapContainer(sec)
-	local w = { __sec = sec }
-
-	function w:toggle(cfg)
-		cfg = cfg or {}
-		local flag = cfg.flag or next_flag("Toggle")
-
-		sec:AddToggle(flag, {
-			Text = cfg.name or "toggle",
-			Default = cfg.default and true or false,
-			Callback = wrapCallback(cfg.callback),
-		})
-
-		local o = { __flag = flag }
-
-		if cfg.options then
-			local ok, dep = pcall(function()
-				local box = sec:AddDependencyGroupbox()
-				box:SetupDependencies({ { Toggles[flag], true } })
-				return box
-			end)
-
-			if ok and dep then
-				o.Option = wrapContainer(dep)
-			else
-				o.Option = wrapContainer(sec)
-			end
-		end
-
-		function o:GetValue()
-			return Toggles[flag] and Toggles[flag].Value or false
-		end
-
-		function o:SetValue(v)
-			if Toggles[flag] then
-				Toggles[flag]:SetValue(v and true or false)
-			end
-		end
-
-		return o
-	end
-
-	function w:slider(cfg)
-		cfg = cfg or {}
-		local flag = cfg.flag or next_flag("Slider")
-		local dec = tonumber(cfg.round or cfg.Rounding) or 0
-
-		sec:AddSlider(flag, {
-			Text = cfg.name or "slider",
-			Min = tonumber(cfg.min) or 0,
-			Max = tonumber(cfg.max) or 100,
-			Default = cfg.default,
-			Rounding = dec,
-			Suffix = (type(cfg.suffix) == "string" and cfg.suffix) or "",
-			Callback = wrapCallback(cfg.callback),
-		})
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Value
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetValue(v)
-			end
-		end
-
-		return o
-	end
-
-	function w:combo(cfg)
-		cfg = cfg or {}
-		local flag = cfg.flag or next_flag("Drop")
-
-		sec:AddDropdown(flag, {
-			Values = cfg.list or {},
-			Default = cfg.default,
-			Multi = cfg.multi and true or false,
-			Searchable = cfg.search ~= false and #(cfg.list or {}) > 8,
-			Callback = wrapCallback(cfg.callback),
-		})
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Value
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetValue(v)
-			end
-		end
-
-		function o:setlist(v)
-			if Options[flag] then
-				Options[flag]:SetValues(v or {})
-			end
-		end
-
-		return o
-	end
-
-	function w:color(cfg)
-		cfg = cfg or {}
-		local flag = cfg.flag or next_flag("Color")
-		local hookfn = cfg.callback
-
-		sec:AddLabel(cfg.name or "color"):AddColorPicker(flag, {
-			Default = cfg.default,
-			Title = cfg.name,
-			Callback = hookfn and wrapCallback(function(c)
-				hookfn(c)
-			end) or nil,
-		})
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Value
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetValue(v)
-			end
-		end
-
-		return o
-	end
-
-	function w:keybind(cfg)
-		cfg = cfg or {}
-		local flag = cfg.flag or next_flag("Key")
-
-		sec:AddLabel(cfg.name or "keybind"):AddKeyPicker(flag, {
-			Default = cfg.default,
-			Text = cfg.name or "keybind",
-			Callback = wrapCallback(cfg.callback),
-			ChangedCallback = wrapCallback(cfg.callback),
-		})
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Value
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetValue(v)
-			end
-		end
-
-		return o
-	end
-
-	function w:button(cfg)
-		cfg = cfg or {}
-
-		sec:AddButton({
-			Text = cfg.name or "Button",
-			Func = cfg.callback,
-		})
-
-		return { __el = nil }
-	end
-
-	function w:label(cfg)
-		if type(cfg) ~= "table" then
-			cfg = { name = tostring(cfg) }
-		end
-
-		local flag = cfg.flag or next_flag("Label")
-
-		sec:AddLabel(flag, {
-			Text = tostring(cfg.name or ""),
-			DoesWrap = cfg.wrap and true or false,
-		})
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Text or ""
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetText(tostring(v))
-			end
-		end
-
-		return o
-	end
-
-	--// wrapped Add* API (same signatures as source) //--
-	function w:AddToggle(cfg)
-		cfg = cfg or {}
-
-		local el = w:toggle({
-			name = cfg.Name or "toggle",
-			default = cfg.Default,
-			options = cfg.Option and true or false,
-			flag = cfg.Flag,
-			callback = cfg.Callback,
-		})
-
-		if cfg.Option and not el.Option then
-			el.Option = wrapContainer(sec)
-		end
-
-		return el
-	end
-
-	function w:AddSlider(cfg)
-		cfg = cfg or {}
-
-		return w:slider({
-			name = cfg.Name or "slider",
-			min = cfg.Min,
-			max = cfg.Max,
-			default = cfg.Default,
-			round = cfg.Round or cfg.Rounding,
-			suffix = (type(cfg.Type) == "string" and cfg.Type ~= "") and cfg.Type or "",
-			flag = cfg.Flag,
-			callback = cfg.Callback,
-		})
-	end
-
-	function w:AddDropdown(cfg)
-		cfg = cfg or {}
-
-		local el = w:combo({
-			name = cfg.Name or "dropdown",
-			list = cfg.Values or {},
-			default = cfg.Default,
-			multi = cfg.Multi,
-			flag = cfg.Flag,
-			callback = cfg.Callback,
-		})
-
-		el.SetValues = el.setlist
-		el.Generate = function() end
-
-		return el
-	end
-
-	function w:AddColorPicker(cfg)
-		cfg = cfg or {}
-		local hookfn = cfg.Callback
-
-		return w:color({
-			name = cfg.Name or "color",
-			default = cfg.Default,
-			flag = cfg.Flag,
-			callback = hookfn and function(c)
-				hookfn(c, cfg.Transparency)
-			end or nil,
-		})
-	end
-
-	function w:AddKeybind(cfg)
-		cfg = cfg or {}
-
-		return w:keybind({
-			name = cfg.Name or "keybind",
-			default = cfg.Default,
-			flag = cfg.Flag,
-			callback = cfg.Callback,
-		})
-	end
-
-	function w:AddButton(cfg)
-		cfg = cfg or {}
-
-		return w:button({
-			name = cfg.Name or "Button",
-			callback = cfg.Callback,
-		})
-	end
-
-	function w:AddLabel(name, wrapText)
-		if type(name) == "table" then
-			return w:label({ name = name.Text, wrap = name.DoesWrap, flag = name.Flag })
-		end
-
-		return w:label({ name = tostring(name or ""), wrap = wrapText })
-	end
-
-	return w
-end
-
---// popup / input (mapped to Obsidian dialogs) //--
-local function popmenu(cfg)
-	cfg = cfg or {}
-	local items = cfg.items or {}
-	local buttons = {}
-
-	for i, item in ipairs(items) do
-		local title = item.name or item.Name or ("Действие " .. i)
-
-		buttons[title .. "_" .. i] = {
-			Title = title,
-			Callback = function()
-				if type(item.callback) == "function" then
-					pcall(item.callback)
-				end
-			end,
-		}
-	end
-
-	buttons.Close = { Title = "Закрыть", Callback = function() end }
-
-	Window:AddDialog("Popup_" .. next_flag("Pop"), {
-		Title = tostring(cfg.title or "Меню"),
-		Description = "",
-		AutoDismiss = true,
-		OutsideClickDismiss = true,
-		FooterButtons = buttons,
-	})
-end
-
-local function askinput(cfg)
-	lib:notify({ title = "ввод недоступен в этом интерфейсе" })
-	return nil
-end
-
---// live character clone viewport (AddClone) //--
-local function build_clone_menu(tab, ccfg)
-	ccfg = ccfg or {}
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local lp = Players.LocalPlayer
-
-	local gb = tab:AddGroupbox({
-		Name = ccfg.Name or "Character",
-		Side = obsidian_side(ccfg.Position),
-	})
-
-	local function snapshot(char)
-		local was = char.Archivable
-		char.Archivable = true
-		local clone = char:Clone()
-		char.Archivable = was
-
-		for _, o in ipairs(clone:GetDescendants()) do
-			if o:IsA("Script") or o:IsA("LocalScript") or o:IsA("ModuleScript") then
-				o:Destroy()
-			end
-		end
-
-		return clone
-	end
-
-	local char = lp.Character or lp.CharacterAdded:Wait()
-	local model = snapshot(char)
-	model:PivotTo(char:GetPivot())
-
-	local vp = gb:AddViewport("PreviewClone", {
-		Object = model,
-		Clone = false,
-		Camera = Instance.new("Camera"),
-		Interactive = true,
-		AutoFocus = true,
-		Height = tonumber(ccfg.Height) or 232,
-	})
-
-	local vp_frame = nil
-	for _, d in ipairs(vp.Holder:GetDescendants()) do
-		if d:IsA("ViewportFrame") then
-			vp_frame = d
-			break
-		end
-	end
-
-	local parts = {}
-	for _, o in ipairs(model:GetDescendants()) do
-		if o:IsA("BasePart") then
-			parts[#parts + 1] = o
-		end
-	end
-
-	local item = {
-		viewport = vp_frame,
-		parts = parts,
-		active = true,
+	getgenv().shitaroebet = lib
+
+	--// notifications //--
+	local __Notification = {
+		new = function(c)
+			c = c or {}
+			lib:notify({
+				title = c.Title or "SHITARO",
+				text = c.Content or "",
+				life = c.Duration or 5,
+			})
+		end,
 	}
 
-	local renderCallbacks = {}
-	local conn
-	conn = RunService.Heartbeat:Connect(function()
-		if Library.Unloaded then
-			conn:Disconnect()
-			return
+	local __Logging = {
+		new = function(ic, txt, dur, col)
+			lib:notify({
+				title = tostring(txt or ""),
+				life = dur or 4,
+			})
+		end,
+	}
+
+	getgenv().UI_SYNC = { stamp = 0, count = 0, start = os.clock() }
+
+	local function wrapCallback(fn)
+		if type(fn) ~= "function" then
+			return nil
 		end
 
-		local c = lp.Character
-		local live = (c ~= nil) and (Library.ActiveTab == tab) and vp.Holder.Visible
-		item.active = live and true or false
+		return function(...)
+			local sync = getgenv().UI_SYNC
+			if sync then
+				local now = os.clock()
+				if now - sync.stamp > 0.4 then sync.count = 0 end
+				sync.stamp = now
+				sync.count = sync.count + 1
+			end
+			return fn(...)
+		end
+	end
 
-		if live and c then
-			pcall(function()
-				model:PivotTo(c:GetPivot())
-				for _, o in ipairs(c:GetDescendants()) do
-					if o:IsA("BasePart") and o.Name ~= "HumanoidRootPart" then
-						for _, t in ipairs(parts) do
-							if t.Name == o.Name then
-								t.CFrame = o.CFrame
-								break
+	local function side_of(pos)
+		if pos == "full" or pos == 3 then
+			return "full"
+		end
+
+		return (pos == "right" or pos == 2) and "right" or "left"
+	end
+
+	local function obsidian_side(pos)
+		if side_of(pos) == "right" then
+			return "Right"
+		end
+
+		return "Left"
+	end
+
+	--// section wrapper: raw old-lib API + Add* API над одним Obsidian Groupbox //--
+	local function wrapContainer(sec)
+		local w = { __sec = sec }
+
+		function w:toggle(cfg)
+			cfg = cfg or {}
+			local flag = cfg.flag or next_flag("Toggle")
+
+			sec:AddToggle(flag, {
+				Text = cfg.name or "toggle",
+				Default = cfg.default and true or false,
+				Callback = wrapCallback(cfg.callback),
+			})
+
+			local o = { __flag = flag }
+
+			if cfg.options then
+				local ok, dep = pcall(function()
+					local box = sec:AddDependencyGroupbox()
+					box:SetupDependencies({ { Toggles[flag], true } })
+					return box
+				end)
+
+				if ok and dep then
+					o.Option = wrapContainer(dep)
+				else
+					o.Option = wrapContainer(sec)
+				end
+			end
+
+			function o:GetValue()
+				return Toggles[flag] and Toggles[flag].Value or false
+			end
+
+			function o:SetValue(v)
+				if Toggles[flag] then
+					Toggles[flag]:SetValue(v and true or false)
+				end
+			end
+
+			return o
+		end
+
+		function w:slider(cfg)
+			cfg = cfg or {}
+			local flag = cfg.flag or next_flag("Slider")
+			local dec = tonumber(cfg.round or cfg.Rounding) or 0
+
+			sec:AddSlider(flag, {
+				Text = cfg.name or "slider",
+				Min = tonumber(cfg.min) or 0,
+				Max = tonumber(cfg.max) or 100,
+				Default = cfg.default,
+				Rounding = dec,
+				Suffix = (type(cfg.suffix) == "string" and cfg.suffix) or "",
+				Callback = wrapCallback(cfg.callback),
+			})
+
+			local o = { __flag = flag }
+
+			function o:GetValue()
+				return Options[flag] and Options[flag].Value
+			end
+
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetValue(v)
+				end
+			end
+
+			return o
+		end
+
+		function w:combo(cfg)
+			cfg = cfg or {}
+			local flag = cfg.flag or next_flag("Drop")
+
+			sec:AddDropdown(flag, {
+				Values = cfg.list or {},
+				Default = cfg.default,
+				Multi = cfg.multi and true or false,
+				Searchable = cfg.search ~= false and #(cfg.list or {}) > 8,
+				Callback = wrapCallback(cfg.callback),
+			})
+
+			local o = { __flag = flag }
+
+			function o:GetValue()
+				return Options[flag] and Options[flag].Value
+			end
+
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetValue(v)
+				end
+			end
+
+			function o:setlist(v)
+				if Options[flag] then
+					Options[flag]:SetValues(v or {})
+				end
+			end
+
+			return o
+		end
+
+		function w:color(cfg)
+			cfg = cfg or {}
+			local flag = cfg.flag or next_flag("Color")
+			local hookfn = cfg.callback
+
+			sec:AddLabel(cfg.name or "color"):AddColorPicker(flag, {
+				Default = cfg.default,
+				Title = cfg.name,
+				Callback = hookfn and wrapCallback(function(c)
+					hookfn(c)
+				end) or nil,
+			})
+
+			local o = { __flag = flag }
+
+			function o:GetValue()
+				return Options[flag] and Options[flag].Value
+			end
+
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetValue(v)
+				end
+			end
+
+			return o
+		end
+
+		function w:keybind(cfg)
+			cfg = cfg or {}
+			local flag = cfg.flag or next_flag("Key")
+
+			sec:AddLabel(cfg.name or "keybind"):AddKeyPicker(flag, {
+				Default = cfg.default,
+				Text = cfg.name or "keybind",
+				Callback = wrapCallback(cfg.callback),
+				ChangedCallback = wrapCallback(cfg.callback),
+			})
+
+			local o = { __flag = flag }
+
+			function o:GetValue()
+				return Options[flag] and Options[flag].Value
+			end
+
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetValue(v)
+				end
+			end
+
+			return o
+		end
+
+		function w:button(cfg)
+			cfg = cfg or {}
+
+			sec:AddButton({
+				Text = cfg.name or "Button",
+				Func = cfg.callback,
+			})
+
+			return { __el = nil }
+		end
+
+		function w:label(cfg)
+			if type(cfg) ~= "table" then
+				cfg = { name = tostring(cfg) }
+			end
+
+			local flag = cfg.flag or next_flag("Label")
+
+			sec:AddLabel(flag, {
+				Text = tostring(cfg.name or ""),
+				DoesWrap = cfg.wrap and true or false,
+			})
+
+			local o = { __flag = flag }
+
+			function o:GetValue()
+				return Options[flag] and Options[flag].Text or ""
+			end
+
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetText(tostring(v))
+				end
+			end
+
+			return o
+		end
+
+		--// wrapped Add* API (те же сигнатуры, что в исходнике) //--
+		function w:AddToggle(cfg)
+			cfg = cfg or {}
+
+			local el = w:toggle({
+				name = cfg.Name or "toggle",
+				default = cfg.Default,
+				options = cfg.Option and true or false,
+				flag = cfg.Flag,
+				callback = cfg.Callback,
+			})
+
+			if cfg.Option and not el.Option then
+				el.Option = wrapContainer(sec)
+			end
+
+			return el
+		end
+
+		function w:AddSlider(cfg)
+			cfg = cfg or {}
+
+			return w:slider({
+				name = cfg.Name or "slider",
+				min = cfg.Min,
+				max = cfg.Max,
+				default = cfg.Default,
+				round = cfg.Round or cfg.Rounding,
+				suffix = (type(cfg.Type) == "string" and cfg.Type ~= "") and cfg.Type or "",
+				flag = cfg.Flag,
+				callback = cfg.Callback,
+			})
+		end
+
+		function w:AddDropdown(cfg)
+			cfg = cfg or {}
+
+			local el = w:combo({
+				name = cfg.Name or "dropdown",
+				list = cfg.Values or {},
+				default = cfg.Default,
+				multi = cfg.Multi,
+				flag = cfg.Flag,
+				callback = cfg.Callback,
+			})
+
+			el.SetValues = el.setlist
+			el.Generate = function() end
+
+			return el
+		end
+
+		function w:AddColorPicker(cfg)
+			cfg = cfg or {}
+			local hookfn = cfg.Callback
+
+			return w:color({
+				name = cfg.Name or "color",
+				default = cfg.Default,
+				flag = cfg.Flag,
+				callback = hookfn and function(c)
+					hookfn(c, cfg.Transparency)
+				end or nil,
+			})
+		end
+
+		function w:AddKeybind(cfg)
+			cfg = cfg or {}
+
+			return w:keybind({
+				name = cfg.Name or "keybind",
+				default = cfg.Default,
+				flag = cfg.Flag,
+				callback = cfg.Callback,
+			})
+		end
+
+		function w:AddButton(cfg)
+			cfg = cfg or {}
+
+			return w:button({
+				name = cfg.Name or "Button",
+				callback = cfg.Callback,
+			})
+		end
+
+		function w:AddLabel(name, wrapText)
+			if type(name) == "table" then
+				return w:label({ name = name.Text, wrap = name.DoesWrap, flag = name.Flag })
+			end
+
+			return w:label({ name = tostring(name or ""), wrap = wrapText })
+		end
+
+		return w
+	end
+
+	--// popup / input (через Obsidian диалоги) //--
+	popmenu = function(cfg)
+		cfg = cfg or {}
+		local items = cfg.items or {}
+		local buttons = {}
+
+		for i, item in ipairs(items) do
+			local title = item.name or item.Name or ("Действие " .. i)
+
+			buttons[title .. "_" .. i] = {
+				Title = title,
+				Callback = function()
+					if type(item.callback) == "function" then
+						pcall(item.callback)
+					end
+				end,
+			}
+		end
+
+		buttons.Close = { Title = "Закрыть", Callback = function() end }
+
+		Window:AddDialog("Popup_" .. next_flag("Pop"), {
+			Title = tostring(cfg.title or "Меню"),
+			Description = "",
+			AutoDismiss = true,
+			OutsideClickDismiss = true,
+			FooterButtons = buttons,
+		})
+	end
+
+	askinput = function(cfg)
+		lib:notify({ title = "ввод недоступен в этом интерфейсе" })
+		return nil
+	end
+
+	--// живой клон персонажа (AddClone) //--
+	local function build_clone_menu(tab, ccfg)
+		ccfg = ccfg or {}
+		local Players = game:GetService("Players")
+		local RunService = game:GetService("RunService")
+		local lp = Players.LocalPlayer
+
+		local gb = tab:AddGroupbox({
+			Name = ccfg.Name or "Character",
+			Side = obsidian_side(ccfg.Position),
+		})
+
+		local function snapshot(char)
+			local was = char.Archivable
+			char.Archivable = true
+			local clone = char:Clone()
+			char.Archivable = was
+
+			for _, o in ipairs(clone:GetDescendants()) do
+				if o:IsA("Script") or o:IsA("LocalScript") or o:IsA("ModuleScript") then
+					o:Destroy()
+				end
+			end
+
+			return clone
+		end
+
+		local char = lp.Character or lp.CharacterAdded:Wait()
+		local model = snapshot(char)
+		model:PivotTo(char:GetPivot())
+
+		local vp = gb:AddViewport("PreviewClone", {
+			Object = model,
+			Clone = false,
+			Camera = Instance.new("Camera"),
+			Interactive = true,
+			AutoFocus = true,
+			Height = tonumber(ccfg.Height) or 232,
+		})
+
+		local vp_frame = nil
+		for _, d in ipairs(vp.Holder:GetDescendants()) do
+			if d:IsA("ViewportFrame") then
+				vp_frame = d
+				break
+			end
+		end
+
+		local parts = {}
+		for _, o in ipairs(model:GetDescendants()) do
+			if o:IsA("BasePart") then
+				parts[#parts + 1] = o
+			end
+		end
+
+		local item = {
+			viewport = vp_frame,
+			parts = parts,
+			active = true,
+		}
+
+		local renderCallbacks = {}
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			if Library.Unloaded then
+				conn:Disconnect()
+				return
+			end
+
+			local c = lp.Character
+			local live = (c ~= nil) and (Library.ActiveTab == tab) and vp.Holder.Visible
+			item.active = live and true or false
+
+			if live and c then
+				pcall(function()
+					model:PivotTo(c:GetPivot())
+					for _, o in ipairs(c:GetDescendants()) do
+						if o:IsA("BasePart") and o.Name ~= "HumanoidRootPart" then
+							for _, t in ipairs(parts) do
+								if t.Name == o.Name then
+									t.CFrame = o.CFrame
+									break
+								end
 							end
 						end
 					end
-				end
-			end)
-		end
-
-		for _, fn in ipairs(renderCallbacks) do
-			pcall(fn, item)
-		end
-	end)
-
-	local obj = {
-		viewport = vp_frame,
-		item = item,
-	}
-
-	function obj:onrender(fn)
-		if type(fn) == "function" then
-			table.insert(renderCallbacks, fn)
-		end
-	end
-
-	if type(ccfg.Callback) == "function" then
-		pcall(ccfg.Callback, model, item)
-	end
-
-	return obj
-end
-
---// page wrapper (tab) //--
-local function wrapPage(tab, name)
-	local menu = { Name = name, __tab = tab }
-
-	menu.Root = setmetatable({}, {
-		__index = function(_, key)
-			if key == "Visible" then
-				return Library.ActiveTab == tab
-			end
-		end,
-	})
-
-	function menu:AddSection(scfg)
-		scfg = scfg or {}
-
-		return wrapContainer(tab:AddGroupbox({
-			Name = scfg.Name or "SECTION",
-			Side = obsidian_side(scfg.Position),
-		}))
-	end
-
-	function menu:AddClone(ccfg)
-		return build_clone_menu(tab, ccfg)
-	end
-
-	function menu:AddImageList(icfg)
-		icfg = icfg or {}
-
-		local gb = tab:AddGroupbox({
-			Name = icfg.Name or "LIST",
-			Side = obsidian_side(icfg.Position),
-		})
-
-		local flag = icfg.Flag or next_flag("Gallery")
-
-		pcall(function()
-			gb:AddDropdown(flag, {
-				Values = icfg.Values or {},
-				Default = icfg.Default,
-				Multi = icfg.Multi and true or false,
-				Searchable = icfg.Search ~= false,
-				Callback = wrapCallback(icfg.Callback),
-			})
-		end)
-
-		local o = { __flag = flag }
-
-		function o:GetValue()
-			return Options[flag] and Options[flag].Value
-		end
-
-		function o:SetValue(v)
-			if Options[flag] then
-				Options[flag]:SetValue(v)
-			end
-		end
-
-		function o:SetValues(v)
-			if Options[flag] then
-				Options[flag]:SetValues(v or {})
-			end
-		end
-
-		o.SetData = o.SetValues
-
-		function o:SetDefault(v)
-			if Options[flag] then
-				pcall(function()
-					Options[flag]:SetValue(v)
 				end)
 			end
-		end
 
-		function o:Refresh() end
+			for _, fn in ipairs(renderCallbacks) do
+				pcall(fn, item)
+			end
+		end)
 
-		function o:Clear()
-			if Options[flag] then
-				Options[flag]:SetValues({})
+		local obj = {
+			viewport = vp_frame,
+			item = item,
+		}
+
+		function obj:onrender(fn)
+			if type(fn) == "function" then
+				table.insert(renderCallbacks, fn)
 			end
 		end
 
-		function o:All()
-			return Options[flag] and Options[flag].Values or {}
+		if type(ccfg.Callback) == "function" then
+			pcall(ccfg.Callback, model, item)
 		end
 
-		function o:Search() end
-		o.Generate = function() end
-
-		return o
+		return obj
 	end
 
-	function menu:AddSub(bcfg)
-		bcfg = bcfg or {}
-		return wrapPage(tab, bcfg.Name or "SUB")
-	end
+	--// page wrapper (tab) //--
+	local function wrapPage(tab, name)
+		local menu = { Name = name, __tab = tab }
 
-	return menu
-end
+		menu.Root = setmetatable({}, {
+			__index = function(_, key)
+				if key == "Visible" then
+					return Library.ActiveTab == tab
+				end
+			end,
+		})
 
---// fatality compat //--
-local fatality = {}
-fatality.Colors = { Black = Color3.fromRGB(16, 16, 16) }
+		function menu:AddSection(scfg)
+			scfg = scfg or {}
 
-function fatality:CreateNotifier()
-	return {
-		Notify = function(_, c)
-			c = c or {}
-			__Notification.new(c)
-		end,
-	}
-end
+			return wrapContainer(tab:AddGroupbox({
+				Name = scfg.Name or "SECTION",
+				Side = obsidian_side(scfg.Position),
+			}))
+		end
 
-function fatality:CreateEventNotifier()
-	return {
-		Notify = function(_, c)
-			c = c or {}
-			__Logging.new(c.Icon or "clipboard", c.Title or c.Content or "", c.Duration or 4, c.Color)
-		end,
-	}
-end
+		function menu:AddClone(ccfg)
+			return build_clone_menu(tab, ccfg)
+		end
 
-function fatality:Loader() end
-function fatality:RegisterColorElement() end
-function fatality:UpdateColors() end
+		function menu:AddImageList(icfg)
+			icfg = icfg or {}
 
-local COLOR_DEFS = {
-	{ name = "акцент", key = "AccentColor", side = "Left" },
-	{ name = "текст", key = "FontColor", side = "Right" },
-	{ name = "фон", key = "BackgroundColor", side = "Left" },
-	{ name = "панель", key = "MainColor", side = "Right" },
-	{ name = "обводка", key = "OutlineColor", side = "Left" },
-}
+			local gb = tab:AddGroupbox({
+				Name = icfg.Name or "LIST",
+				Side = obsidian_side(icfg.Position),
+			})
 
-local root = nil
+			local flag = icfg.Flag or next_flag("Gallery")
 
-function fatality.new(cfg)
-	cfg = cfg or {}
+			pcall(function()
+				gb:AddDropdown(flag, {
+					Values = icfg.Values or {},
+					Default = icfg.Default,
+					Multi = icfg.Multi and true or false,
+					Searchable = icfg.Search ~= false,
+					Callback = wrapCallback(icfg.Callback),
+				})
+			end)
 
-	local win = {}
+			local o = { __flag = flag }
 
-	win.Menus = {}
-	win.ClickSoundId = ""
-	win.__win = {
-		toggle = function()
-			Window:Toggle()
-		end,
-	}
+			function o:GetValue()
+				return Options[flag] and Options[flag].Value
+			end
 
-	function win:Toggle()
-		Window:Toggle()
-	end
+			function o:SetValue(v)
+				if Options[flag] then
+					Options[flag]:SetValue(v)
+				end
+			end
 
-	function win:SetSize() end
-	function win:Set3DRender() end
+			function o:SetValues(v)
+				if Options[flag] then
+					Options[flag]:SetValues(v or {})
+				end
+			end
 
-	function win:AddMenu(mcfg)
-		mcfg = mcfg or {}
+			o.SetData = o.SetValues
 
-		local tab = Window:AddTab(mcfg.Name or "TAB", mcfg.Icon or "circle-dot")
-		local menu = wrapPage(tab, mcfg.Name)
+			function o:SetDefault(v)
+				if Options[flag] then
+					pcall(function()
+						Options[flag]:SetValue(v)
+					end)
+				end
+			end
 
-		table.insert(win.Menus, menu)
+			function o:Refresh() end
+
+			function o:Clear()
+				if Options[flag] then
+					Options[flag]:SetValues({})
+				end
+			end
+
+			function o:All()
+				return Options[flag] and Options[flag].Values or {}
+			end
+
+			function o:Search() end
+			o.Generate = function() end
+
+			return o
+		end
+
+		function menu:AddSub(bcfg)
+			bcfg = bcfg or {}
+			return wrapPage(tab, bcfg.Name or "SUB")
+		end
 
 		return menu
 	end
 
-	function win:AddColors()
-		local ct = Window:AddTab("цвета", "palette")
+	--// fatality compat //--
+	local fatality = {}
+	fatality.Colors = { Black = Color3.fromRGB(16, 16, 16) }
 
-		for _, def in ipairs(COLOR_DEFS) do
-			local sec = ct:AddGroupbox({ Name = def.name, Side = def.side })
+	function fatality:CreateNotifier()
+		return {
+			Notify = function(_, c)
+				c = c or {}
+				__Notification.new(c)
+			end,
+		}
+	end
 
-			sec:AddLabel(def.name):AddColorPicker("Scheme_" .. def.key, {
-				Default = Library.Scheme[def.key],
-				Callback = function(c)
-					Library.Scheme[def.key] = c
-					pcall(function()
-						Library:UpdateColorsAsync(def.key, false)
-					end)
-				end,
-			})
+	function fatality:CreateEventNotifier()
+		return {
+			Notify = function(_, c)
+				c = c or {}
+				__Logging.new(c.Icon or "clipboard", c.Title or c.Content or "", c.Duration or 4, c.Color)
+			end,
+		}
+	end
+
+	function fatality:Loader() end
+	function fatality:RegisterColorElement() end
+	function fatality:UpdateColors() end
+
+	local COLOR_DEFS = {
+		{ name = "акцент", key = "AccentColor", side = "Left" },
+		{ name = "текст", key = "FontColor", side = "Right" },
+		{ name = "фон", key = "BackgroundColor", side = "Left" },
+		{ name = "панель", key = "MainColor", side = "Right" },
+		{ name = "обводка", key = "OutlineColor", side = "Left" },
+	}
+
+	function fatality.new(cfg)
+		cfg = cfg or {}
+
+		local win = {}
+
+		win.Menus = {}
+		win.ClickSoundId = ""
+		win.__win = {
+			toggle = function()
+				Window:Toggle()
+			end,
+		}
+
+		function win:Toggle()
+			Window:Toggle()
 		end
 
-		return ct
-	end
+		function win:SetSize() end
+		function win:Set3DRender() end
 
-	function win:AddConfig()
-		local ct = Window:AddTab("конфиги", "settings")
+		function win:AddMenu(mcfg)
+			mcfg = mcfg or {}
 
-		ThemeManager:SetLibrary(Library)
-		SaveManager:SetLibrary(Library)
-		SaveManager:IgnoreThemeSettings()
-		SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
-		ThemeManager:SetFolder("ShitaroObsidian")
-		SaveManager:SetFolder("ShitaroObsidian")
+			local tab = Window:AddTab(mcfg.Name or "TAB", mcfg.Icon or "circle-dot")
+			local menu = wrapPage(tab, mcfg.Name)
 
-		ThemeManager:ApplyToTab(ct)
-		SaveManager:BuildConfigSection(ct)
+			table.insert(win.Menus, menu)
 
-		local pref = ct:AddGroupbox({ Name = "Меню", Side = "Right" })
-
-		return wrapPage(ct, "конфиги"), wrapContainer(pref)
-	end
-
-	function win:SetBind(v)
-		if typeof(v) == "EnumItem" then
-			Library.ToggleKeybind = v
-		elseif type(v) == "string" then
-			pcall(function()
-				Library.ToggleKeybind = Enum.KeyCode[v]
-			end)
+			return menu
 		end
+
+		function win:AddColors()
+			local ct = Window:AddTab("цвета", "palette")
+
+			for _, def in ipairs(COLOR_DEFS) do
+				local sec = ct:AddGroupbox({ Name = def.name, Side = def.side })
+
+				sec:AddLabel(def.name):AddColorPicker("Scheme_" .. def.key, {
+					Default = Library.Scheme[def.key],
+					Callback = function(c)
+						Library.Scheme[def.key] = c
+						pcall(function()
+							Library:UpdateColorsAsync(def.key, false)
+						end)
+					end,
+				})
+			end
+
+			return ct
+		end
+
+		function win:AddConfig()
+			local ct = Window:AddTab("конфиги", "settings")
+
+			ThemeManager:SetLibrary(Library)
+			SaveManager:SetLibrary(Library)
+			SaveManager:IgnoreThemeSettings()
+			SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+			ThemeManager:SetFolder("ShitaroObsidian")
+			SaveManager:SetFolder("ShitaroObsidian")
+
+			ThemeManager:ApplyToTab(ct)
+			SaveManager:BuildConfigSection(ct)
+
+			local pref = ct:AddGroupbox({ Name = "Меню", Side = "Right" })
+
+			return wrapPage(ct, "конфиги"), wrapContainer(pref)
+		end
+
+		function win:SetBind(v)
+			if typeof(v) == "EnumItem" then
+				Library.ToggleKeybind = v
+			elseif type(v) == "string" then
+				pcall(function()
+					Library.ToggleKeybind = Enum.KeyCode[v]
+				end)
+			end
+		end
+
+		return win
 	end
 
-	root = win.__win
+	--// instance glue (как в исходнике) //--
+	notification = fatality:CreateNotifier()
+	event_notify = fatality:CreateEventNotifier()
 
-	return win
+	task.spawn(function()
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if (obj:IsA("BasePart") and obj.Name == "GlowShell")
+				or (obj:IsA("Model") and (obj.Name == "GlowChr" or obj.Name == "ChamsChr")) then
+				pcall(function() obj:Destroy() end)
+			end
+		end
+	end)
+
+	fatality:Loader({
+		Name = "SHITARO",
+		Duration = 4,
+	})
+
+	notification:Notify({
+		Title = "SHITARO",
+		Content = "yo, " .. game.Players.LocalPlayer.DisplayName .. ", welcome back!",
+	})
+
+	window = fatality.new({
+		Name = "SHITARO",
+		Expire = "Never",
+	})
 end
-
---// instance glue (same as source flow) //--
-local notification = fatality:CreateNotifier()
-local event_notify = fatality:CreateEventNotifier()
-
-task.spawn(function()
-	for _, obj in ipairs(workspace:GetDescendants()) do
-		if (obj:IsA("BasePart") and obj.Name == "GlowShell")
-			or (obj:IsA("Model") and (obj.Name == "GlowChr" or obj.Name == "ChamsChr")) then
-			pcall(function() obj:Destroy() end)
-		end
-	end
-end)
-
-fatality:Loader({
-	Name = "SHITARO",
-	Duration = 4,
-})
-
-notification:Notify({
-	Title = "SHITARO",
-	Content = "yo, " .. game.Players.LocalPlayer.DisplayName .. ", welcome back!",
-})
-
-local window = fatality.new({
-	Name = "SHITARO",
-	Expire = "Never",
-})
 local roleThreadConns = {}
 local roleThread = task.spawn(function()
 	local rs = game:GetService("ReplicatedStorage")
@@ -11140,6 +11104,7 @@ do
 	end)
 end
 
+	local PS = {}
 do
 	local sec = player_tab:AddSection({
 		Name = "разное",
@@ -11156,7 +11121,7 @@ do
 	local players = game:GetService("Players")
 	local run = game:GetService("RunService")
 	local uis = game:GetService("UserInputService")
-	local vu = game:GetService("VirtualUser")
+	PS.vu = game:GetService("VirtualUser")
 	local cs = game:GetService("CollectionService")
 	local rs = game:GetService("ReplicatedStorage")
 	local ws = workspace
@@ -11169,78 +11134,78 @@ do
 
 	local anti_master, afk_set, fling_set, void_set, coin_set, fade_set, trap_set = false, false, false, false, false, false, false
 	local anti_afk, anti_fling, anti_void, anti_trap = false, false, false, false
-	local coin_on = false
-	local fade_on = false
-	local void_original = ws.FallenPartsDestroyHeight
+	PS.coin_on = false
+	PS.fade_on = false
+	PS.void_original = ws.FallenPartsDestroyHeight
 	local noclip_on, fly_on = false, false
 	local inf_jump_on, wallhop_on = false, false
-	local fly_speed = 60
-	local fly_gravity = ws.Gravity
+	PS.fly_speed = 60
+	PS.fly_gravity = ws.Gravity
 	local fly_up_on, fly_down_on = true, true
 	local fly_up_kc, fly_down_kc = Enum.KeyCode.Space, Enum.KeyCode.LeftControl
-	local noclip_cache = {}
-	local fling_cache = {}
-	local last_coin_backup = nil
+	PS.noclip_cache = {}
+	PS.fling_cache = {}
+	PS.last_coin_backup = nil
 
-	local function kill_container(d)
+	PS.kill_container = function(d)
 		pcall(function()
 			d.Archivable = true
-			last_coin_backup = { clone = d:Clone(), parent = d.Parent }
+			PS.last_coin_backup = { clone = d:Clone(), parent = d.Parent }
 			d:Destroy()
 		end)
 	end
 
-	local function wipe_coins()
+	PS.wipe_coins = function()
 		for _, v in ipairs(cs:GetTagged("CoinVisual")) do
 			pcall(function() v:Destroy() end)
 		end
 		for _, d in ipairs(ws:GetDescendants()) do
 			if d.Name == "CoinContainer" then
-				kill_container(d)
+				PS.kill_container(d)
 			end
 		end
 	end
 
-	local function restore_coins()
-		if last_coin_backup and last_coin_backup.clone then
+	PS.restore_coins = function()
+		if PS.last_coin_backup and PS.last_coin_backup.clone then
 			pcall(function()
-				last_coin_backup.clone.Parent = last_coin_backup.parent or ws
+				PS.last_coin_backup.clone.Parent = PS.last_coin_backup.parent or ws
 			end)
-			last_coin_backup = nil
+			PS.last_coin_backup = nil
 		end
 	end
 
-	local player_gui = lp:FindFirstChildOfClass("PlayerGui")
-	local fade_cache = {}
-	local fade_conns = {}
+	PS.player_gui = lp:FindFirstChildOfClass("PlayerGui")
+	PS.fade_cache = {}
+	PS.fade_conns = {}
 
-	local FADE_GUI_NAMES = { CameraFade = true, SpawnFade = true, Fade = true, DeathFade = true }
-	local fade_desc_conn = nil
+	PS.FADE_GUI_NAMES = { CameraFade = true, SpawnFade = true, Fade = true, DeathFade = true }
+	PS.fade_desc_conn = nil
 
-	local function fade_gui()
-		if player_gui and player_gui.Parent then return player_gui end
-		player_gui = lp:FindFirstChildOfClass("PlayerGui")
-		return player_gui
+	PS.fade_gui = function()
+		if PS.player_gui and PS.player_gui.Parent then return PS.player_gui end
+		PS.player_gui = lp:FindFirstChildOfClass("PlayerGui")
+		return PS.player_gui
 	end
 
-	local function fade_hide(frame)
+	PS.fade_hide = function(frame)
 		if not frame or not frame.Parent or not frame:IsA("GuiObject") then return end
-		if fade_cache[frame] == nil then fade_cache[frame] = frame.Visible end
+		if PS.fade_cache[frame] == nil then PS.fade_cache[frame] = frame.Visible end
 		if frame.Visible then pcall(function() frame.Visible = false end) end
-		if not fade_conns[frame] then
-			fade_conns[frame] = frame:GetPropertyChangedSignal("Visible"):Connect(function()
-				if fade_on and frame.Visible then
+		if not PS.fade_conns[frame] then
+			PS.fade_conns[frame] = frame:GetPropertyChangedSignal("Visible"):Connect(function()
+				if PS.fade_on and frame.Visible then
 					pcall(function() frame.Visible = false end)
 				end
 			end)
 		end
 	end
 
-	local function fade_match(inst)
+	PS.fade_match = function(inst)
 		if not inst:IsA("GuiObject") then return false end
 		local parent = inst.Parent
 		if not parent then return false end
-		if (inst.Name == "Fade" or inst.Name == "Frame") and parent:IsA("ScreenGui") and FADE_GUI_NAMES[parent.Name] then
+		if (inst.Name == "Fade" or inst.Name == "Frame") and parent:IsA("ScreenGui") and PS.FADE_GUI_NAMES[parent.Name] then
 			return true
 		end
 		if inst.Name == "Fade" and parent.Name == "Game" then
@@ -11249,12 +11214,12 @@ do
 		return false
 	end
 
-	local function fade_targets()
+	PS.fade_targets = function()
 		local list = {}
-		local gui = fade_gui()
+		local gui = PS.fade_gui()
 		if not gui then return list end
 		for _, child in ipairs(gui:GetChildren()) do
-			if child:IsA("ScreenGui") and FADE_GUI_NAMES[child.Name] then
+			if child:IsA("ScreenGui") and PS.FADE_GUI_NAMES[child.Name] then
 				for _, sub in ipairs(child:GetChildren()) do
 					if sub:IsA("GuiObject") and (sub.Name == "Fade" or sub.Name == "Frame") then
 						list[#list + 1] = sub
@@ -11269,32 +11234,32 @@ do
 		return list
 	end
 
-	local function fade_watch()
-		if fade_desc_conn then return end
-		local gui = fade_gui()
+	PS.fade_watch = function()
+		if PS.fade_desc_conn then return end
+		local gui = PS.fade_gui()
 		if not gui then return end
-		fade_desc_conn = gui.DescendantAdded:Connect(function(d)
-			if not fade_on then return end
-			if not fade_match(d) then return end
+		PS.fade_desc_conn = gui.DescendantAdded:Connect(function(d)
+			if not PS.fade_on then return end
+			if not PS.fade_match(d) then return end
 			task.defer(function()
-				if fade_on and d.Parent then pcall(fade_hide, d) end
+				if PS.fade_on and d.Parent then pcall(PS.fade_hide, d) end
 			end)
 		end)
 	end
 
-	local function fade_apply()
-		fade_watch()
-		for _, frame in ipairs(fade_targets()) do
-			pcall(fade_hide, frame)
+	PS.fade_apply = function()
+		PS.fade_watch()
+		for _, frame in ipairs(PS.fade_targets()) do
+			pcall(PS.fade_hide, frame)
 		end
 	end
 
-	local function fade_restore()
-		for _, conn in pairs(fade_conns) do
+	PS.fade_restore = function()
+		for _, conn in pairs(PS.fade_conns) do
 			pcall(function() conn:Disconnect() end)
 		end
-		fade_conns = {}
-		for frame, v in pairs(fade_cache) do
+		PS.fade_conns = {}
+		for frame, v in pairs(PS.fade_cache) do
 			if frame and frame.Parent then
 				pcall(function()
 					frame.BackgroundTransparency = 1
@@ -11302,53 +11267,53 @@ do
 				end)
 			end
 		end
-		fade_cache = {}
+		PS.fade_cache = {}
 	end
 
-	local FLING_MAX_VEL = 700
-	local FLING_MAX_ANG = 90
-	local FLING_SNAP_DIST = 60
-	local FLING_HOLD = 0.25
-	local FLING_SAFE_VEL = 250
+	PS.FLING_MAX_VEL = 700
+	PS.FLING_MAX_ANG = 90
+	PS.FLING_SNAP_DIST = 60
+	PS.FLING_HOLD = 0.25
+	PS.FLING_SAFE_VEL = 250
 
-	local fling_reg = {}
-	local fling_conns = {}
-	local fling_attached = false
-	local fling_safe_cf = nil
-	local fling_hold_until = 0
+	PS.fling_reg = {}
+	PS.fling_conns = {}
+	PS.fling_attached = false
+	PS.fling_safe_cf = nil
+	PS.fling_hold_until = 0
 
-	local fling_active_since = 0
+	PS.fling_active_since = 0
 
-	local function fling_busy()
+	PS.fling_busy = function()
 		if fly_on then return true end
 		if os.clock() < (getgenv().VELOCITY_DESYNC_UNTIL or 0) then return true end
 		if (getgenv().FLING_ACTIVE or 0) > 0 then
 			local now = os.clock()
-			if fling_active_since == 0 then fling_active_since = now end
-			if now - fling_active_since < 20 then return true end
+			if PS.fling_active_since == 0 then PS.fling_active_since = now end
+			if now - PS.fling_active_since < 20 then return true end
 			getgenv().FLING_ACTIVE = 0
-			fling_active_since = 0
+			PS.fling_active_since = 0
 			return false
 		end
-		fling_active_since = 0
+		PS.fling_active_since = 0
 		return false
 	end
 
-	local function fling_kill_part(p)
-		if fling_cache[p] == nil then fling_cache[p] = p.CanCollide end
+	PS.fling_kill_part = function(p)
+		if PS.fling_cache[p] == nil then PS.fling_cache[p] = p.CanCollide end
 		if p.CanCollide then p.CanCollide = false end
 	end
 
-	local function fling_unregister(model)
-		local entry = fling_reg[model]
+	PS.fling_unregister = function(model)
+		local entry = PS.fling_reg[model]
 		if not entry then return end
-		fling_reg[model] = nil
+		PS.fling_reg[model] = nil
 		for i = 1, #entry.conns do
 			pcall(function() entry.conns[i]:Disconnect() end)
 		end
 		for p in pairs(entry.parts) do
-			local v = fling_cache[p]
-			fling_cache[p] = nil
+			local v = PS.fling_cache[p]
+			PS.fling_cache[p] = nil
 			if v ~= nil and p.Parent then
 				pcall(function() p.CanCollide = v end)
 			end
@@ -11356,15 +11321,15 @@ do
 		table.clear(entry.parts)
 	end
 
-	local function fling_register(model)
+	PS.fling_register = function(model)
 		if not anti_fling or not model then return end
-		if fling_reg[model] or model == lp.Character then return end
+		if PS.fling_reg[model] or model == lp.Character then return end
 		local entry = { parts = {}, conns = {} }
-		fling_reg[model] = entry
+		PS.fling_reg[model] = entry
 		local function add(d)
 			if d:IsA("BasePart") and not entry.parts[d] then
 				entry.parts[d] = true
-				if anti_fling then pcall(fling_kill_part, d) end
+				if anti_fling then pcall(PS.fling_kill_part, d) end
 			end
 		end
 		for _, d in model:GetDescendants() do
@@ -11377,152 +11342,152 @@ do
 		push(model.DescendantRemoving:Connect(function(d)
 			if entry.parts[d] then
 				entry.parts[d] = nil
-				fling_cache[d] = nil
+				PS.fling_cache[d] = nil
 			end
 		end))
 		push(model.AncestryChanged:Connect(function(_, parent)
-			if not parent then fling_unregister(model) end
+			if not parent then PS.fling_unregister(model) end
 		end))
 	end
 
-	local function fling_is_body(m)
+	PS.fling_is_body = function(m)
 		return m ~= lp.Character
 			and m:IsA("Model")
 			and m:FindFirstChildOfClass("Humanoid") ~= nil
 	end
 
-	local function fling_scan()
+	PS.fling_scan = function()
 		for _, pl in players:GetPlayers() do
-			if pl ~= lp and pl.Character then fling_register(pl.Character) end
+			if pl ~= lp and pl.Character then PS.fling_register(pl.Character) end
 		end
 		for _, m in ws:GetChildren() do
-			if fling_is_body(m) then fling_register(m) end
+			if PS.fling_is_body(m) then PS.fling_register(m) end
 		end
 	end
 
-	local function fling_sweep()
-		for model, entry in pairs(fling_reg) do
+	PS.fling_sweep = function()
+		for model, entry in pairs(PS.fling_reg) do
 			if not model.Parent or model == lp.Character then
-				fling_unregister(model)
+				PS.fling_unregister(model)
 			else
 				for p in pairs(entry.parts) do
 					if p.Parent then
 						if p.CanCollide then
-							if fling_cache[p] == nil then fling_cache[p] = true end
+							if PS.fling_cache[p] == nil then PS.fling_cache[p] = true end
 							p.CanCollide = false
 						end
 					else
 						entry.parts[p] = nil
-						fling_cache[p] = nil
+						PS.fling_cache[p] = nil
 					end
 				end
 			end
 		end
 	end
 
-	local function fling_guard(full)
+	PS.fling_guard = function(full)
 		local hrp = get_hrp()
 		if not hrp or not hrp.Parent then
-			fling_safe_cf = nil
+			PS.fling_safe_cf = nil
 			return
 		end
-		if fling_busy() then
-			fling_safe_cf = nil
+		if PS.fling_busy() then
+			PS.fling_safe_cf = nil
 			return
 		end
 		local lin = hrp.AssemblyLinearVelocity
 		local ang = hrp.AssemblyAngularVelocity
-		local spike = lin.Magnitude > FLING_MAX_VEL or ang.Magnitude > FLING_MAX_ANG
+		local spike = lin.Magnitude > PS.FLING_MAX_VEL or ang.Magnitude > PS.FLING_MAX_ANG
 		local now = os.clock()
-		if spike then fling_hold_until = now + FLING_HOLD end
-		if spike or now < fling_hold_until then
+		if spike then PS.fling_hold_until = now + PS.FLING_HOLD end
+		if spike or now < PS.fling_hold_until then
 			hrp.AssemblyLinearVelocity = Vector3.zero
 			hrp.AssemblyAngularVelocity = Vector3.zero
-			if full and fling_safe_cf then
-				if (hrp.Position - fling_safe_cf.Position).Magnitude > FLING_SNAP_DIST then
-					hrp.CFrame = fling_safe_cf
+			if full and PS.fling_safe_cf then
+				if (hrp.Position - PS.fling_safe_cf.Position).Magnitude > PS.FLING_SNAP_DIST then
+					hrp.CFrame = PS.fling_safe_cf
 				end
 			end
-		elseif full and lin.Magnitude < FLING_SAFE_VEL then
-			fling_safe_cf = hrp.CFrame
+		elseif full and lin.Magnitude < PS.FLING_SAFE_VEL then
+			PS.fling_safe_cf = hrp.CFrame
 		end
 	end
 
-	local function fling_detach()
-		fling_attached = false
-		for i = 1, #fling_conns do
-			pcall(function() fling_conns[i]:Disconnect() end)
+	PS.fling_detach = function()
+		PS.fling_attached = false
+		for i = 1, #PS.fling_conns do
+			pcall(function() PS.fling_conns[i]:Disconnect() end)
 		end
-		table.clear(fling_conns)
+		table.clear(PS.fling_conns)
 	end
 
-	local function fling_attach()
-		if fling_attached then return end
-		fling_attached = true
-		local function push(c) fling_conns[#fling_conns + 1] = c end
+	PS.fling_attach = function()
+		if PS.fling_attached then return end
+		PS.fling_attached = true
+		local function push(c) PS.fling_conns[#PS.fling_conns + 1] = c end
 		local function watch(pl)
 			if pl == lp then return end
 			push(pl.CharacterAdded:Connect(function(c)
-				if anti_fling then fling_register(c) end
+				if anti_fling then PS.fling_register(c) end
 			end))
 			push(pl.CharacterRemoving:Connect(function(c)
-				fling_unregister(c)
+				PS.fling_unregister(c)
 			end))
 		end
 		for _, pl in players:GetPlayers() do watch(pl) end
 		push(players.PlayerAdded:Connect(function(pl)
 			watch(pl)
-			if anti_fling and pl.Character then fling_register(pl.Character) end
+			if anti_fling and pl.Character then PS.fling_register(pl.Character) end
 		end))
 		push(players.PlayerRemoving:Connect(function(pl)
-			if pl.Character then fling_unregister(pl.Character) end
+			if pl.Character then PS.fling_unregister(pl.Character) end
 		end))
 		push(ws.ChildAdded:Connect(function(m)
 			if not anti_fling then return end
 			task.defer(function()
-				if anti_fling and m.Parent == ws and fling_is_body(m) then
-					fling_register(m)
+				if anti_fling and m.Parent == ws and PS.fling_is_body(m) then
+					PS.fling_register(m)
 				end
 			end)
 		end))
 		push(lp.CharacterAdded:Connect(function(c)
-			fling_unregister(c)
-			fling_safe_cf = nil
-			fling_hold_until = 0
-			if anti_fling then task.defer(fling_scan) end
+			PS.fling_unregister(c)
+			PS.fling_safe_cf = nil
+			PS.fling_hold_until = 0
+			if anti_fling then task.defer(PS.fling_scan) end
 		end))
-		fling_scan()
+		PS.fling_scan()
 	end
 
-	local function fling_restore()
-		fling_detach()
-		for model in pairs(fling_reg) do
-			fling_unregister(model)
+	PS.fling_restore = function()
+		PS.fling_detach()
+		for model in pairs(PS.fling_reg) do
+			PS.fling_unregister(model)
 		end
-		table.clear(fling_reg)
-		for p, v in pairs(fling_cache) do
+		table.clear(PS.fling_reg)
+		for p, v in pairs(PS.fling_cache) do
 			if p and p.Parent then pcall(function() p.CanCollide = v end) end
 		end
-		table.clear(fling_cache)
-		fling_safe_cf = nil
-		fling_hold_until = 0
+		table.clear(PS.fling_cache)
+		PS.fling_safe_cf = nil
+		PS.fling_hold_until = 0
 	end
 
-	local TRAP_LOCK = 1
-	local TRAP_HOLD = 5
-	local trap_window = 0
-	local trap_busy = false
-	local trap_speed_cache = 16
-	local trap_jump_cache = 50
-	local trap_hit_conn = nil
+	PS.TRAP_LOCK = 1
+	PS.TRAP_HOLD = 5
+	PS.trap_window = 0
+	PS.trap_busy = false
+	PS.trap_speed_cache = 16
+	PS.trap_jump_cache = 50
+	PS.trap_hit_conn = nil
 
-	local function trap_hum()
+	PS.trap_hum = function()
 		local c = lp.Character
 		return c and c:FindFirstChildOfClass("Humanoid")
 	end
 
-	local function trap_kill_gui()
-		local gui = fade_gui()
+	PS.trap_kill_gui = function()
+		local gui = PS.fade_gui()
 		if not gui then return end
 		for _, child in ipairs(gui:GetChildren()) do
 			if child.Name == "TrapGUI" then
@@ -11531,124 +11496,124 @@ do
 		end
 	end
 
-	local function trap_unlock(hum)
+	PS.trap_unlock = function(hum)
 		if not hum or not hum.Parent then return end
 		pcall(function()
-			if hum.WalkSpeed <= TRAP_LOCK then hum.WalkSpeed = trap_speed_cache end
-			if hum.JumpPower <= TRAP_LOCK then hum.JumpPower = trap_jump_cache end
+			if hum.WalkSpeed <= PS.TRAP_LOCK then hum.WalkSpeed = PS.trap_speed_cache end
+			if hum.JumpPower <= PS.TRAP_LOCK then hum.JumpPower = PS.trap_jump_cache end
 		end)
 	end
 
-	local function trap_engage()
+	PS.trap_engage = function()
 		if not anti_trap then return end
-		trap_window = os.clock() + TRAP_HOLD
-		local hum = trap_hum()
+		PS.trap_window = os.clock() + PS.TRAP_HOLD
+		local hum = PS.trap_hum()
 		if hum then
-			if hum.WalkSpeed > TRAP_LOCK then trap_speed_cache = hum.WalkSpeed end
-			if hum.JumpPower > TRAP_LOCK then trap_jump_cache = hum.JumpPower end
+			if hum.WalkSpeed > PS.TRAP_LOCK then PS.trap_speed_cache = hum.WalkSpeed end
+			if hum.JumpPower > PS.TRAP_LOCK then PS.trap_jump_cache = hum.JumpPower end
 		end
-		trap_kill_gui()
-		if trap_busy then return end
-		trap_busy = true
+		PS.trap_kill_gui()
+		if PS.trap_busy then return end
+		PS.trap_busy = true
 		task.spawn(function()
-			while anti_trap and os.clock() < trap_window do
-				trap_unlock(trap_hum())
-				trap_kill_gui()
+			while anti_trap and os.clock() < PS.trap_window do
+				PS.trap_unlock(PS.trap_hum())
+				PS.trap_kill_gui()
 				run.Heartbeat:Wait()
 			end
-			trap_busy = false
+			PS.trap_busy = false
 		end)
 	end
 
-	local function trap_attach()
-		if trap_hit_conn then return end
+	PS.trap_attach = function()
+		if PS.trap_hit_conn then return end
 		local ok, remote = pcall(function()
 			local sys = rs:FindFirstChild("TrapSystem")
 			return sys and sys:FindFirstChild("TrapHitLocal")
 		end)
 		if not ok or not remote then return end
-		trap_hit_conn = remote.OnClientEvent:Connect(function()
-			task.spawn(trap_engage)
+		PS.trap_hit_conn = remote.OnClientEvent:Connect(function()
+			task.spawn(PS.trap_engage)
 		end)
 	end
 
-	local function trap_detach()
-		if trap_hit_conn then
-			pcall(function() trap_hit_conn:Disconnect() end)
-			trap_hit_conn = nil
+	PS.trap_detach = function()
+		if PS.trap_hit_conn then
+			pcall(function() PS.trap_hit_conn:Disconnect() end)
+			PS.trap_hit_conn = nil
 		end
-		trap_window = 0
-		trap_unlock(trap_hum())
+		PS.trap_window = 0
+		PS.trap_unlock(PS.trap_hum())
 	end
 
-	local function upd_anti()
+	PS.upd_anti = function()
 		anti_afk = anti_master and afk_set
 		local new_void = anti_master and void_set
 		if new_void ~= anti_void then
 			anti_void = new_void
 			pcall(function()
-				ws.FallenPartsDestroyHeight = anti_void and -9e9 or void_original
+				ws.FallenPartsDestroyHeight = anti_void and -9e9 or PS.void_original
 			end)
 		end
 		local new_fling = anti_master and fling_set
 		if new_fling ~= anti_fling then
 			anti_fling = new_fling
-			if anti_fling then fling_attach() else fling_restore() end
+			if anti_fling then PS.fling_attach() else PS.fling_restore() end
 		end
 		local new_coin = anti_master and coin_set
-		if new_coin ~= coin_on then
-			coin_on = new_coin
-			if coin_on then wipe_coins() else restore_coins() end
+		if new_coin ~= PS.coin_on then
+			PS.coin_on = new_coin
+			if PS.coin_on then PS.wipe_coins() else PS.restore_coins() end
 		end
 		local new_fade = anti_master and fade_set
-		if new_fade ~= fade_on then
-			fade_on = new_fade
-			if fade_on then fade_apply() else fade_restore() end
+		if new_fade ~= PS.fade_on then
+			PS.fade_on = new_fade
+			if PS.fade_on then PS.fade_apply() else PS.fade_restore() end
 		end
 		local new_trap = anti_master and trap_set
 		if new_trap ~= anti_trap then
 			anti_trap = new_trap
-			if anti_trap then trap_attach() else trap_detach() end
+			if anti_trap then PS.trap_attach() else PS.trap_detach() end
 		end
 	end
 
-	local idle_conn = lp.Idled:Connect(function()
+	PS.idle_conn = lp.Idled:Connect(function()
 		if anti_afk then
 			pcall(function()
-				vu:CaptureController()
-				vu:ClickButton2(Vector2.new())
+				PS.vu:CaptureController()
+				PS.vu:ClickButton2(Vector2.new())
 			end)
 		end
 	end)
 
-	local coin_conn = cs:GetInstanceAddedSignal("CoinVisual"):Connect(function(v)
-		if coin_on then
+	PS.coin_conn = cs:GetInstanceAddedSignal("CoinVisual"):Connect(function(v)
+		if PS.coin_on then
 			task.wait()
-			if coin_on then pcall(function() v:Destroy() end) end
+			if PS.coin_on then pcall(function() v:Destroy() end) end
 		end
 	end)
 
-	local coin_desc_conn = ws.DescendantAdded:Connect(function(d)
-		if coin_on and d.Name == "CoinContainer" then
+	PS.coin_desc_conn = ws.DescendantAdded:Connect(function(d)
+		if PS.coin_on and d.Name == "CoinContainer" then
 			task.wait()
-			if coin_on then kill_container(d) end
+			if PS.coin_on then PS.kill_container(d) end
 		end
 	end)
 
-	local function noclip_restore()
-		for p, v in pairs(noclip_cache) do
+	PS.noclip_restore = function()
+		for p, v in pairs(PS.noclip_cache) do
 			if p and p.Parent then p.CanCollide = v end
 		end
-		noclip_cache = {}
+		PS.noclip_cache = {}
 	end
 
-	local part_index = setmetatable({}, { __mode = "k" })
+	PS.part_index = setmetatable({}, { __mode = "k" })
 
-	local function char_parts(char)
-		local entry = part_index[char]
+	PS.char_parts = function(char)
+		local entry = PS.part_index[char]
 		if not entry then
 			entry = { list = {}, valid = false }
-			part_index[char] = entry
+			PS.part_index[char] = entry
 			local function dirty(d)
 				if d:IsA("BasePart") then entry.valid = false end
 			end
@@ -11670,56 +11635,56 @@ do
 		return entry.list
 	end
 
-	local function release_part_index()
-		for _, entry in pairs(part_index) do
+	PS.release_part_index = function()
+		for _, entry in pairs(PS.part_index) do
 			if entry.added then pcall(function() entry.added:Disconnect() end) end
 			if entry.removing then pcall(function() entry.removing:Disconnect() end) end
 		end
-		part_index = setmetatable({}, { __mode = "k" })
+		PS.part_index = setmetatable({}, { __mode = "k" })
 	end
 
-	local step_conn = run.Stepped:Connect(function()
+	PS.step_conn = run.Stepped:Connect(function()
 		if anti_fling then
-			if not fling_attached then pcall(fling_attach) end
-			pcall(fling_sweep)
-			pcall(fling_guard, true)
+			if not PS.fling_attached then pcall(PS.fling_attach) end
+			pcall(PS.fling_sweep)
+			pcall(PS.fling_guard, true)
 		end
 		if noclip_on then
 			if (getgenv().FLING_ACTIVE or 0) == 0 then
 				local c = lp.Character
 				if c then
-					local list = char_parts(c)
+					local list = PS.char_parts(c)
 					for i = 1, #list do
 						local p = list[i]
 						if p.Parent and p.CanCollide then
-							if noclip_cache[p] == nil then noclip_cache[p] = p.CanCollide end
+							if PS.noclip_cache[p] == nil then PS.noclip_cache[p] = p.CanCollide end
 							p.CanCollide = false
 						end
 					end
 				end
-			elseif next(noclip_cache) then
-				noclip_restore()
+			elseif next(PS.noclip_cache) then
+				PS.noclip_restore()
 			end
 		end
 	end)
 
-	local fling_beat_conn = run.Heartbeat:Connect(function()
+	PS.fling_beat_conn = run.Heartbeat:Connect(function()
 		if anti_fling then
-			pcall(fling_guard, false)
+			pcall(PS.fling_guard, false)
 		end
 	end)
 
-	local controls_ref = nil
+	PS.controls_ref = nil
 	local function get_controls()
-		if controls_ref then return controls_ref end
+		if PS.controls_ref then return PS.controls_ref end
 		local ok, res = pcall(function()
 			local ps = lp:FindFirstChild("PlayerScripts")
 			local pm = ps and ps:FindFirstChild("PlayerModule")
 			if not pm then return nil end
 			return require(pm):GetControls()
 		end)
-		if ok and res then controls_ref = res end
-		return controls_ref
+		if ok and res then PS.controls_ref = res end
+		return PS.controls_ref
 	end
 
 	local function flat_unit(v)
@@ -11816,33 +11781,33 @@ do
 		local jump_held = (os.clock() - jump_hold_t) < 0.2
 		if fly_up_on and (uis:IsKeyDown(fly_up_kc) or jump_held) then dir = dir + Vector3.yAxis end
 		if fly_down_on and uis:IsKeyDown(fly_down_kc) then dir = dir - Vector3.yAxis end
-		if dir.Magnitude > 0 then dir = dir.Unit * fly_speed end
+		if dir.Magnitude > 0 then dir = dir.Unit * PS.fly_speed end
 		h.AssemblyLinearVelocity = dir
 	end)
 
 	getgenv().MISC_UNLOAD = function()
 		anti_master, anti_afk, anti_fling, anti_void = false, false, false, false
-		coin_set, coin_on = false, false
-		fade_set, fade_on = false, false
+		coin_set, PS.coin_on = false, false
+		fade_set, PS.fade_on = false, false
 		trap_set, anti_trap = false, false
-		pcall(function() ws.FallenPartsDestroyHeight = void_original end)
+		pcall(function() ws.FallenPartsDestroyHeight = PS.void_original end)
 		noclip_on, fly_on = false, false
 		inf_jump_on, wallhop_on = false, false
-		if idle_conn then pcall(function() idle_conn:Disconnect() end) idle_conn = nil end
-		if coin_conn then pcall(function() coin_conn:Disconnect() end) coin_conn = nil end
-		if coin_desc_conn then pcall(function() coin_desc_conn:Disconnect() end) coin_desc_conn = nil end
-		if fade_desc_conn then pcall(function() fade_desc_conn:Disconnect() end) fade_desc_conn = nil end
-		if step_conn then pcall(function() step_conn:Disconnect() end) step_conn = nil end
-		if fling_beat_conn then pcall(function() fling_beat_conn:Disconnect() end) fling_beat_conn = nil end
+		if PS.idle_conn then pcall(function() PS.idle_conn:Disconnect() end) PS.idle_conn = nil end
+		if PS.coin_conn then pcall(function() PS.coin_conn:Disconnect() end) PS.coin_conn = nil end
+		if PS.coin_desc_conn then pcall(function() PS.coin_desc_conn:Disconnect() end) PS.coin_desc_conn = nil end
+		if PS.fade_desc_conn then pcall(function() PS.fade_desc_conn:Disconnect() end) PS.fade_desc_conn = nil end
+		if PS.step_conn then pcall(function() PS.step_conn:Disconnect() end) PS.step_conn = nil end
+		if PS.fling_beat_conn then pcall(function() PS.fling_beat_conn:Disconnect() end) PS.fling_beat_conn = nil end
 		if fly_conn then pcall(function() fly_conn:Disconnect() end) fly_conn = nil end
 		if jump_conn then pcall(function() jump_conn:Disconnect() end) jump_conn = nil end
-		trap_detach()
-		restore_coins()
-		fade_restore()
-		noclip_restore()
-		fling_restore()
-		release_part_index()
-		ws.Gravity = fly_gravity
+		PS.trap_detach()
+		PS.restore_coins()
+		PS.fade_restore()
+		PS.noclip_restore()
+		PS.fling_restore()
+		PS.release_part_index()
+		ws.Gravity = PS.fly_gravity
 	end
 	getgenv().__PLR_QUEUE("char", "fly", function(target)
 		local fly = target:AddToggle({
@@ -11855,7 +11820,7 @@ do
 				if v then
 					ws.Gravity = 0
 				else
-					ws.Gravity = fly_gravity
+					ws.Gravity = PS.fly_gravity
 					local h = get_hrp()
 					if h then h.AssemblyLinearVelocity = Vector3.zero end
 				end
@@ -11870,7 +11835,7 @@ do
 			Round = 0,
 			Flag = "misc_fly_speed",
 			Callback = function(v)
-				fly_speed = v
+				PS.fly_speed = v
 			end
 		})
 
@@ -11921,7 +11886,7 @@ do
 			Option = true,
 			Callback = function(v)
 				anti_master = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11931,7 +11896,7 @@ do
 			Flag = "Afk",
 			Callback = function(v)
 				afk_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11941,7 +11906,7 @@ do
 			Flag = "AFling",
 			Callback = function(v)
 				fling_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11951,7 +11916,7 @@ do
 			Flag = "AVoid",
 			Callback = function(v)
 				void_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11962,7 +11927,7 @@ do
 			Flag = "ACoin",
 			Callback = function(v)
 				coin_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11973,7 +11938,7 @@ do
 			Flag = "AFade",
 			Callback = function(v)
 				fade_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 
@@ -11984,7 +11949,7 @@ do
 			Flag = "ATrap",
 			Callback = function(v)
 				trap_set = v
-				upd_anti()
+				PS.upd_anti()
 			end
 		})
 	end)
@@ -11997,7 +11962,7 @@ do
 			ToolTip = "Позволяет ходить сквозь стены",
 			Callback = function(v)
 				noclip_on = v
-				if not v then noclip_restore() end
+				if not v then PS.noclip_restore() end
 			end
 		})
 	end)
