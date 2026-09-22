@@ -11261,6 +11261,10 @@ function Library:CreateWindow(WindowInfo)
         })
 
         Library.WindowContainer = Container
+
+        for _, Frame in { MainFrame, Tabs, Container, SearchBox, BottomBackground } do
+            Frame.BackgroundTransparency = WindowInfo.BackgroundTransparency
+        end
     end
 
     --// Window Table \\--
@@ -11375,7 +11379,10 @@ function Library:CreateWindow(WindowInfo)
         assert(typeof(Transparency) == "number", "Expected number for Transparency got: " .. typeof(Transparency))
         Transparency = math.clamp(Transparency, 0, 1)
 
-        MainFrame.BackgroundTransparency = Transparency
+        for _, Frame in { MainFrame, Tabs, Container, SearchBox, BottomBackground } do
+            Frame.BackgroundTransparency = Transparency
+        end
+
         WindowInfo.BackgroundTransparency = Transparency
     end
 
