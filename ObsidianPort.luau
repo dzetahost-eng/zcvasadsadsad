@@ -11,21 +11,6 @@ if type(shhttp) ~= "function" then
 end
 
 local shjson = game:GetService("HttpService")
-
-local shkey = {}
-
-function shkey.bind(fn)
-	if type(fn) == "function" then
-		shkey.kill = fn
-	end
-end
-
-function shkey.stop() end
-function shkey.watch() end
-
-function shkey.open()
-	return true
-end
 do
 	local band, bxor, bnot = bit32.band, bit32.bxor, bit32.bnot
 	local rrot, rshift = bit32.rrotate, bit32.rshift
@@ -315,7 +300,6 @@ do
 		return signed("https://shitaro.lol/api/assets/", "ASSET", name)
 	end
 end
-
 local shblob
 
 do
@@ -907,39 +891,12 @@ end
 getgenv().shitaro_assetflush = assetFlush
 
 task.spawn(assetPurge)
-local ICONMAP = {
-	["circle-x"] = "x",
-	["circle-check"] = "shield-check",
-	["clipboard"] = "file-text",
-	["cube-vertexes"] = "box",
-	["mouse-scrollwheel"] = "mouse-pointer",
-	["person"] = "user",
-	["crosshairs"] = "crosshair",
-	["chart-four-vertical-bars"] = "activity",
-	["memory-card"] = "database",
-	["gamepad"] = "gamepad-2",
-}
-
-local function art(v, fallback)
-	if type(v) == "number" then
-		return v
-	end
-
-	if type(v) ~= "string" or v == "" then
-		return fallback
-	end
-
-	return ICONMAP[string.lower(v)] or v
-end
-
 local function CreateIndicator()
 	local ind = {}
-
 	function ind:Set() end
 	function ind:SetRender() end
 	function ind:SetText() end
 	function ind:Remove() end
-
 	return ind
 end
 --==============================================================--
@@ -8991,14 +8948,12 @@ do
 	end
 
 	ch.order = function(i, j)
-		LPH_ATTRIBUTES(VM(NONE))
 		local px, py = ch.px, ch.py
 		local ax, bx = px[i], px[j]
 		return ax == bx and py[i] < py[j] or ax < bx
 	end
 
 	ch.hull = function(n)
-		LPH_ATTRIBUTES(VM(NONE))
 		local px, py, ord, st = ch.px, ch.py, ch.ord, ch.stack
 		for i = 1, n do ord[i] = i end
 		table.sort(ord, ch.order)
@@ -9032,7 +8987,6 @@ do
 	end
 
 	ch.visible = function(state)
-		LPH_ATTRIBUTES(VM(NONE))
 		local rows, shown = ch.rows, ch.shown
 		for i = 1, #rows do
 			if shown[i] ~= state then
@@ -9043,7 +8997,6 @@ do
 	end
 
 	ch.clear = function()
-		LPH_ATTRIBUTES(VM(NONE))
 		local rows = ch.rows
 		for i = 1, #rows do
 			pcall(function() rows[i]:Remove() end)
@@ -9058,12 +9011,10 @@ do
 	end
 
 	ch.build = function()
-		LPH_ATTRIBUTES(VM(NONE))
 		ch.clear()
 	end
 
 	ch.row = function(index)
-		LPH_ATTRIBUTES(VM(NONE))
 		local rows = ch.rows
 		local row = rows[index]
 		if row then return row end
@@ -9079,7 +9030,6 @@ do
 	end
 
 	ch.update = function(camera)
-		LPH_ATTRIBUTES(VM(NONE))
 		local char = lp.Character
 		local head = char and char:FindFirstChild("Head")
 		if not head or not head:IsA("BasePart") or not camera then
@@ -9240,14 +9190,12 @@ do
 	end
 
 	local vis_conn = run.Heartbeat:Connect(function()
-		LPH_ATTRIBUTES(VM(NONE))
 		if bt_on then bt_update() end
 		if sc_on then sc_apply() end
 		if tc_on then tc_apply() end
 	end)
 
 	chrom_conn = run.RenderStepped:Connect(function()
-		LPH_ATTRIBUTES(VM(NONE))
 		local cam = ws.CurrentCamera
 		if ch_on then ch.update(cam) end
 		if not chrom_world then return end
@@ -10653,7 +10601,6 @@ do
 	local tp_settle_until = 0
 
 	local do_fake_position = function(dt, hrp)
-		LPH_ATTRIBUTES(VM(NONE))
 		pcall(function() setfflag("S2PhysicsSenderRate", tostring(round(local_fps, 1))) end)
 		if fake_position_sitting then
 			local_fake_position = nil
@@ -10957,7 +10904,6 @@ do
 	local velocity_desync_rotate = false
 
 	local do_velocity_desync = function(dt, hrp)
-		LPH_ATTRIBUTES(VM(NONE))
 		if hrp and not stomping and not purchasing and (getgenv().FLING_ACTIVE or 0) == 0 then
 			pcall(function() setfflag("S2PhysicsSenderRate", tostring(round(local_fps, 1))) end)
 			pcall(function() sethiddenproperty(hrp, "NetworkIsSleeping", false) end)
@@ -11675,7 +11621,7 @@ do
 	end)
 
 	PS.controls_ref = nil
-	local function get_controls()
+	PS.get_controls = function()
 		if PS.controls_ref then return PS.controls_ref end
 		local ok, res = pcall(function()
 			local ps = lp:FindFirstChild("PlayerScripts")
@@ -11687,14 +11633,14 @@ do
 		return PS.controls_ref
 	end
 
-	local function flat_unit(v)
+	PS.flat_unit = function(v)
 		local f = Vector3.new(v.X, 0, v.Z)
 		if f.Magnitude > 0 then return f.Unit end
 		return Vector3.zero
 	end
 
-	local function get_move_vector(cam)
-		local c = get_controls()
+	PS.get_move_vector = function(cam)
+		local c = PS.get_controls()
 		if c then
 			local ok, v = pcall(function() return c:GetMoveVector() end)
 			if ok and typeof(v) == "Vector3" and v.Magnitude > 0.05 then
@@ -11706,43 +11652,43 @@ do
 		if hum and cam then
 			local md = hum.MoveDirection
 			if md.Magnitude > 0.05 then
-				local ff, fr = flat_unit(cam.CFrame.LookVector), flat_unit(cam.CFrame.RightVector)
+				local ff, fr = PS.flat_unit(cam.CFrame.LookVector), PS.flat_unit(cam.CFrame.RightVector)
 				return Vector3.new(md:Dot(fr), 0, -md:Dot(ff))
 			end
 		end
 		return Vector3.zero
 	end
 
-	local hop_params = RaycastParams.new()
-	hop_params.FilterType = Enum.RaycastFilterType.Exclude
-	hop_params.IgnoreWater = true
-	local hop_ang = { 0, 0.45, -0.45, 0.9, -0.9, 1.4, -1.4, 2, -2, 2.6, -2.6, 3.14 }
+	PS.hop_params = RaycastParams.new()
+	PS.hop_params.FilterType = Enum.RaycastFilterType.Exclude
+	PS.hop_params.IgnoreWater = true
+	PS.hop_ang = { 0, 0.45, -0.45, 0.9, -0.9, 1.4, -1.4, 2, -2, 2.6, -2.6, 3.14 }
 
-	local function hop_wall(hrp, hum)
+	PS.hop_wall = function(hrp, hum)
 		local cam = ws.CurrentCamera
-		local base = flat_unit(hum.MoveDirection)
+		local base = PS.flat_unit(hum.MoveDirection)
 		if base == Vector3.zero then
-			base = cam and flat_unit(cam.CFrame.LookVector) or Vector3.zero
+			base = cam and PS.flat_unit(cam.CFrame.LookVector) or Vector3.zero
 		end
 		if base == Vector3.zero then return nil end
-		hop_params.FilterDescendantsInstances = { lp.Character }
+		PS.hop_params.FilterDescendantsInstances = { lp.Character }
 		local pos = hrp.Position
-		for i = 1, #hop_ang do
-			local c, s = math.cos(hop_ang[i]), math.sin(hop_ang[i])
+		for i = 1, #PS.hop_ang do
+			local c, s = math.cos(PS.hop_ang[i]), math.sin(PS.hop_ang[i])
 			local dir = Vector3.new(base.X * c + base.Z * s, 0, base.Z * c - base.X * s) * 3
-			local hit = ws:Raycast(pos, dir, hop_params)
+			local hit = ws:Raycast(pos, dir, PS.hop_params)
 			if not hit then
-				hit = ws:Raycast(pos - Vector3.new(0, 2, 0), dir, hop_params)
+				hit = ws:Raycast(pos - Vector3.new(0, 2, 0), dir, PS.hop_params)
 			end
 			if hit and math.abs(hit.Normal.Y) < 0.5 then return hit end
 		end
 		return nil
 	end
 
-	local jump_hold_t = 0
-	local hop_scan_t = 0
-	local jump_conn = uis.JumpRequest:Connect(function()
-		jump_hold_t = os.clock()
+	PS.jump_hold_t = 0
+	PS.hop_scan_t = 0
+	PS.jump_conn = uis.JumpRequest:Connect(function()
+		PS.jump_hold_t = os.clock()
 		if fly_on or (not inf_jump_on and not wallhop_on) then return end
 		local hrp = get_hrp()
 		local ch = lp.Character
@@ -11754,17 +11700,17 @@ do
 		end
 		if hum.FloorMaterial ~= Enum.Material.Air then return end
 		local now = os.clock()
-		if now - hop_scan_t < 0.1 then return end
-		hop_scan_t = now
-		local wall = hop_wall(hrp, hum)
+		if now - PS.hop_scan_t < 0.1 then return end
+		PS.hop_scan_t = now
+		local wall = PS.hop_wall(hrp, hum)
 		if not wall then return end
-		local n = flat_unit(wall.Normal)
+		local n = PS.flat_unit(wall.Normal)
 		hum:ChangeState(Enum.HumanoidStateType.Jumping)
 		local v = hrp.AssemblyLinearVelocity
 		hrp.AssemblyLinearVelocity = Vector3.new(v.X + n.X * 3, v.Y, v.Z + n.Z * 3)
 	end)
 
-	local fly_conn = run.RenderStepped:Connect(function()
+	PS.fly_conn = run.RenderStepped:Connect(function()
 		if not fly_on then return end
 		local h = get_hrp()
 		if not h then return end
@@ -11774,11 +11720,11 @@ do
 		if uis:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
 		if uis:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
 		if uis:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
-		local mv = get_move_vector(cam)
+		local mv = PS.get_move_vector(cam)
 		if mv.Magnitude > 0.05 then
 			dir = dir + cam.CFrame.LookVector * (-mv.Z) + cam.CFrame.RightVector * mv.X
 		end
-		local jump_held = (os.clock() - jump_hold_t) < 0.2
+		local jump_held = (os.clock() - PS.jump_hold_t) < 0.2
 		if fly_up_on and (uis:IsKeyDown(fly_up_kc) or jump_held) then dir = dir + Vector3.yAxis end
 		if fly_down_on and uis:IsKeyDown(fly_down_kc) then dir = dir - Vector3.yAxis end
 		if dir.Magnitude > 0 then dir = dir.Unit * PS.fly_speed end
@@ -11799,8 +11745,8 @@ do
 		if PS.fade_desc_conn then pcall(function() PS.fade_desc_conn:Disconnect() end) PS.fade_desc_conn = nil end
 		if PS.step_conn then pcall(function() PS.step_conn:Disconnect() end) PS.step_conn = nil end
 		if PS.fling_beat_conn then pcall(function() PS.fling_beat_conn:Disconnect() end) PS.fling_beat_conn = nil end
-		if fly_conn then pcall(function() fly_conn:Disconnect() end) fly_conn = nil end
-		if jump_conn then pcall(function() jump_conn:Disconnect() end) jump_conn = nil end
+		if PS.fly_conn then pcall(function() PS.fly_conn:Disconnect() end) PS.fly_conn = nil end
+		if PS.jump_conn then pcall(function() PS.jump_conn:Disconnect() end) PS.jump_conn = nil end
 		PS.trap_detach()
 		PS.restore_coins()
 		PS.fade_restore()
@@ -11981,18 +11927,18 @@ do
 
 	
 
-	local surf_on = false
-	local surf_speed = 34
-	local surf_active = false
-	local surf_sign = 0
-	local surf_seen = 0
-	local surf_lock = nil
-	local surf_part = nil
-	local surf_conn = nil
-	local surf_solid = nil
-	local surf_params = RaycastParams.new()
-	surf_params.FilterType = Enum.RaycastFilterType.Exclude
-	surf_params.IgnoreWater = true
+	PS.surf_on = false
+	PS.surf_speed = 34
+	PS.surf_active = false
+	PS.surf_sign = 0
+	PS.surf_seen = 0
+	PS.surf_lock = nil
+	PS.surf_part = nil
+	PS.surf_conn = nil
+	PS.surf_solid = nil
+	PS.surf_params = RaycastParams.new()
+	PS.surf_params.FilterType = Enum.RaycastFilterType.Exclude
+	PS.surf_params.IgnoreWater = true
 
 	local SURF_RANGE = 5
 	local SURF_LEN = 11
@@ -12012,7 +11958,7 @@ do
 	})
 
 	local function surf_platform()
-		if not surf_part then
+		if not PS.surf_part then
 			local p = Instance.new("Part")
 			p.Name = "PixelStep"
 			p.Anchored = true
@@ -12025,31 +11971,31 @@ do
 			p.BottomSurface = Enum.SurfaceType.Smooth
 			p.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 100, 1)
 			p.Size = Vector3.new(SURF_LEN, SURF_THICK, SURF_DEPTH)
-			surf_part = p
+			PS.surf_part = p
 		end
-		if surf_part.Parent ~= ws then surf_part.Parent = ws end
-		return surf_part
+		if PS.surf_part.Parent ~= ws then PS.surf_part.Parent = ws end
+		return PS.surf_part
 	end
 
 	local function surf_hide()
-		if surf_part then
-			if surf_part.Parent then surf_part.Parent = nil end
-			if surf_solid ~= false then
-				surf_solid = false
-				surf_part.CanCollide = false
+		if PS.surf_part then
+			if PS.surf_part.Parent then PS.surf_part.Parent = nil end
+			if PS.surf_solid ~= false then
+				PS.surf_solid = false
+				PS.surf_part.CanCollide = false
 			end
 		end
-		surf_sign = 0
-		surf_lock = nil
-		if surf_active then
-			surf_active = false
+		PS.surf_sign = 0
+		PS.surf_lock = nil
+		if PS.surf_active then
+			PS.surf_active = false
 			pcall(function() surf_ind:Set(false) end)
 		end
 	end
 
 	local function surf_cast(origin, dir)
-		surf_params.FilterDescendantsInstances = { lp.Character, surf_part }
-		return ws:Raycast(origin, dir, surf_params)
+		PS.surf_params.FilterDescendantsInstances = { lp.Character, PS.surf_part }
+		return ws:Raycast(origin, dir, PS.surf_params)
 	end
 
 	local function surf_feet(hrp, hum)
@@ -12091,7 +12037,7 @@ do
 		local feet = surf_feet(hrp, hum)
 		local wall = surf_wall(hrp, feet, move, look)
 		if not wall then return nil end
-		local n = flat_unit(wall.Normal)
+		local n = PS.flat_unit(wall.Normal)
 		if n == Vector3.zero then return nil end
 		local ground = surf_cast(hrp.Position, SURF_GROUND)
 		local gy = ground and ground.Position.Y or -1e9
@@ -12122,7 +12068,7 @@ do
 	end
 
 	local function surf_step(_, dt)
-		if not surf_on then return end
+		if not PS.surf_on then return end
 		local char = lp.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -12131,57 +12077,57 @@ do
 			return
 		end
 		local cam = ws.CurrentCamera
-		local move = flat_unit(hum.MoveDirection)
-		local look = cam and flat_unit(cam.CFrame.LookVector) or Vector3.zero
-		local pos, n, feet = surf_scan(hrp, hum, move, look, surf_active and surf_lock and surf_lock.Y or nil)
+		local move = PS.flat_unit(hum.MoveDirection)
+		local look = cam and PS.flat_unit(cam.CFrame.LookVector) or Vector3.zero
+		local pos, n, feet = surf_scan(hrp, hum, move, look, PS.surf_active and PS.surf_lock and PS.surf_lock.Y or nil)
 		if not pos then
-			if os.clock() - surf_seen > 0.3 then surf_hide() end
+			if os.clock() - PS.surf_seen > 0.3 then surf_hide() end
 			return
 		end
-		local tangent = flat_unit(n:Cross(Vector3.yAxis))
+		local tangent = PS.flat_unit(n:Cross(Vector3.yAxis))
 		if tangent == Vector3.zero then return end
 		local hp = hrp.Position
 		local dx, dz = pos.X - hp.X, pos.Z - hp.Z
 		local dist = math.sqrt(dx * dx + dz * dz)
 		local push = move ~= Vector3.zero and move:Dot(n) or 0
-		if surf_active then
+		if PS.surf_active then
 			if dist > 4.5 or push > 0.5 then
 				surf_hide()
 				return
 			end
 		elseif hum.FloorMaterial ~= Enum.Material.Air or dist > 2.8 or move == Vector3.zero or push > -0.15 then
-			if os.clock() - surf_seen > 0.3 then surf_hide() end
+			if os.clock() - PS.surf_seen > 0.3 then surf_hide() end
 			return
 		end
-		surf_seen = os.clock()
+		PS.surf_seen = os.clock()
 		local step = math.min(dt or 0.016, 0.1)
-		if surf_lock and (surf_lock - pos).Magnitude < 2 then
-			pos = surf_lock:Lerp(pos, 1 - math.exp(-16 * step))
+		if PS.surf_lock and (PS.surf_lock - pos).Magnitude < 2 then
+			pos = PS.surf_lock:Lerp(pos, 1 - math.exp(-16 * step))
 		end
-		surf_lock = pos
+		PS.surf_lock = pos
 		local p = surf_platform()
 		local center = pos + n * (SURF_DEPTH * 0.5 - 0.45) - Vector3.new(0, SURF_THICK * 0.5 + 0.02, 0)
 		p.CFrame = CFrame.lookAt(center, center - n)
-		local solid = surf_solid
+		local solid = PS.surf_solid
 		if feet >= pos.Y - 0.06 then
 			solid = true
 		elseif feet < pos.Y - 0.55 then
 			solid = false
 		end
-		if surf_solid ~= solid then
-			surf_solid = solid
+		if PS.surf_solid ~= solid then
+			PS.surf_solid = solid
 			p.CanCollide = solid
 		end
-		if not surf_active then
-			surf_active = true
-			surf_sign = 0
+		if not PS.surf_active then
+			PS.surf_active = true
+			PS.surf_sign = 0
 			pcall(function() surf_ind:Set(true) end)
 		end
 		local along = move:Dot(tangent)
 		if math.abs(along) > 0.35 then
-			surf_sign = along > 0 and 1 or -1
-		elseif surf_sign == 0 then
-			surf_sign = (look:Dot(tangent) < 0) and -1 or 1
+			PS.surf_sign = along > 0 and 1 or -1
+		elseif PS.surf_sign == 0 then
+			PS.surf_sign = (look:Dot(tangent) < 0) and -1 or 1
 		end
 		local v = hrp.AssemblyLinearVelocity
 		local err = pos.Y - feet
@@ -12197,22 +12143,22 @@ do
 		end
 		local blend = 1 - math.exp(-14 * step)
 		local cur = v.X * tangent.X + v.Z * tangent.Z
-		local speed = cur + (surf_speed * surf_sign - cur) * blend
+		local speed = cur + (PS.surf_speed * PS.surf_sign - cur) * blend
 		local gap = (hp.X - pos.X) * n.X + (hp.Z - pos.Z) * n.Z
 		local hug = math.clamp((0.75 - gap) * 9, -9, 9)
 		local glide = tangent * speed + n * hug
 		hrp.AssemblyLinearVelocity = Vector3.new(glide.X, vy, glide.Z)
 	end
 
-	surf_conn = run.Stepped:Connect(surf_step)
+	PS.surf_conn = run.Stepped:Connect(surf_step)
 
 	getgenv().PIXEL_SURF_UNLOAD = function()
-		surf_on = false
-		if surf_conn then pcall(function() surf_conn:Disconnect() end) surf_conn = nil end
+		PS.surf_on = false
+		if PS.surf_conn then pcall(function() PS.surf_conn:Disconnect() end) PS.surf_conn = nil end
 		surf_hide()
-		if surf_part then
-			pcall(function() surf_part:Destroy() end)
-			surf_part = nil
+		if PS.surf_part then
+			pcall(function() PS.surf_part:Destroy() end)
+			PS.surf_part = nil
 		end
 		pcall(function() surf_ind:Set(false) end)
 	end
@@ -12225,7 +12171,7 @@ do
 			Flag = "PixelSurf",
 			Option = true,
 			Callback = function(v)
-				surf_on = v
+				PS.surf_on = v
 				if not v then surf_hide() end
 			end
 		})
@@ -12238,7 +12184,7 @@ do
 			Round = 0,
 			Flag = "misc_surf_speed",
 			Callback = function(v)
-				surf_speed = v
+				PS.surf_speed = v
 			end
 		})
 	end)
@@ -18255,7 +18201,6 @@ do
 	})
 
 	local function tdown()
-		shkey.stop()
 
 		pcall(function()
 			local unloads = {
@@ -18327,10 +18272,8 @@ do
 		pcall(function() lib:unload() end)
 
 		getgenv().shitaroebet = nil
-		getgenv().SHKEY = nil
 	end
 
-	shkey.bind(tdown)
 
 	pref:button({
 		name = "выгрузить",
